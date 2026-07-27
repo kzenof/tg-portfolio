@@ -1,14 +1,20 @@
 """
-Telegram-бот для Mini App портфолио Антона.
-Обрабатывает /start и заявки из Web App.
+Telegram-бот + HTTP API для Mini App.
+Запуск: python main.py
 """
 
 import asyncio
+import hashlib
+import hmac
 import json
 import logging
 import os
 from datetime import datetime
+from pathlib import Path
+from types import SimpleNamespace
+from urllib.parse import parse_qsl
 
+from aiohttp import web
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import (
@@ -30,6 +36,7 @@ ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://username.github.io/tg-portfolio/")
 NOTIFY_BOT_TOKEN = os.getenv("NOTIFY_BOT_TOKEN")
 NOTIFY_CHAT_ID = int(os.getenv("NOTIFY_CHAT_ID", "0") or "0") or ADMIN_ID
+PORT = int(os.getenv("PORT", "8080"))
 
 if not BOT_TOKEN:
     raise ValueError("Укажите BOT_TOKEN в .env")
@@ -37,6 +44,14 @@ if not BOT_TOKEN:
 bot = Bot(token=BOT_TOKEN)
 notify_bot = Bot(token=NOTIFY_BOT_TOKEN) if NOTIFY_BOT_TOKEN else bot
 dp = Dispatcher()
+
+ASSETS_DIR = Path(__file__).parent / "assets"
+
+CORS_HEADERS = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type",
+}
 
 
 def webapp_keyboard() -> InlineKeyboardMarkup:
@@ -65,33 +80,62 @@ WELCOME = (
 )
 
 
-@dp.message(CommandStart())
-async def cmd_start(message: Message):
-    await message.answer(WELCOME, reply_markup=webapp_keyboard(), parse_mode="HTML")
+def make_user(obj) -> SimpleNamespace:
+    if isinstance(obj, SimpleNamespace):
+        return obj
+    return SimpleNamespace(
+        id=obj.id,
+        username=getattr(obj, "username", None),
+        full_name=getattr(obj, "full_name", None) or "Пользователь",
+    )
 
 
-@dp.message(Command("app"))
-async def cmd_app(message: Message):
-    await message.answer("Открыть приложение:", reply_markup=webapp_keyboard())
+def validate_init_data(init_data: str) -> dict | None:
+    """Проверяет подпись Telegram WebApp initData."""
+    if not init_data:
+        return None
+    parsed = dict(parse_qsl(init_data, keep_blank_values=True))
+    received_hash = parsed.pop("hash", None)
+    if not received_hash:
+        return None
+
+    check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
+    secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
+    calculated = hmac.new(secret, check_string.encode(), hashlib.sha256).hexdigest()
+    if calculated != received_hash:
+        return None
+
+    user_raw = parsed.get("user")
+    if not user_raw:
+        return None
+    return json.loads(user_raw)
+
+
+def user_from_init(user_data: dict) -> SimpleNamespace:
+    name = f"{user_data.get('first_name', '')} {user_data.get('last_name', '')}".strip()
+    return SimpleNamespace(
+        id=user_data["id"],
+        username=user_data.get("username"),
+        full_name=name or "Пользователь",
+    )
 
 
 def format_request(data: dict, user) -> str:
-    """Форматирует заявку из Mini App в читаемое сообщение."""
+    user = make_user(user)
     req_type = data.get("type", "unknown")
     username = f"@{user.username}" if user.username else user.full_name
-    user_id = user.id
     now = datetime.now().strftime("%d.%m.%Y %H:%M")
 
     lines = [
-        f"📩 <b>Новая заявка</b>",
-        f"👤 От: {username} (ID: {user_id})",
+        "📩 <b>Новая заявка</b>",
+        f"👤 От: {username} (ID: {user.id})",
         f"🕐 {now}",
         "",
     ]
 
     if req_type == "service":
         lines += [
-            f"📋 <b>Тип:</b> Конфигуратор услуг",
+            "📋 <b>Тип:</b> Конфигуратор услуг",
             f"🔧 <b>Услуга:</b> {data.get('service', '—')}",
         ]
         opts = data.get("options", [])
@@ -106,7 +150,9 @@ def format_request(data: dict, user) -> str:
         if items:
             lines.append("📦 <b>Выбрано:</b>")
             for item in items:
-                lines.append(f"  • {item.get('category', '')}: {item.get('name', '')} — {item.get('price', '')}")
+                lines.append(
+                    f"  • {item.get('category', '')}: {item.get('name', '')} — {item.get('price', '')}"
+                )
         else:
             lines += [
                 f"📁 <b>Категория:</b> {data.get('category', '—')}",
@@ -119,7 +165,7 @@ def format_request(data: dict, user) -> str:
 
     elif req_type == "brief":
         lines += [
-            f"📋 <b>Тип:</b> Быстрый бриф",
+            "📋 <b>Тип:</b> Быстрый бриф",
             f"📝 <b>Задача:</b>\n{data.get('task', '—')}",
         ]
         if data.get("tz_link"):
@@ -131,90 +177,104 @@ def format_request(data: dict, user) -> str:
         if data.get("file_name"):
             lines.append(f"📎 <b>Файл:</b> {data['file_name']}")
 
-    elif req_type == "contact":
-        lines += [
-            f"📋 <b>Тип:</b> Обратная связь",
-            f"💬 <b>Сообщение:</b>\n{data.get('message', '—')}",
-        ]
-
     else:
-        lines.append(f"📦 <b>Данные:</b>\n<code>{json.dumps(data, ensure_ascii=False, indent=2)}</code>")
+        lines.append(f"📦 <b>Данные:</b>\n<code>{json.dumps(data, ensure_ascii=False)}</code>")
 
     return "\n".join(lines)
 
 
 async def notify_admin(text: str, user) -> bool:
-    """Отправляет заявку админу. Возвращает True если доставлено."""
     chat_id = NOTIFY_CHAT_ID or ADMIN_ID
     if not chat_id:
-        logger.warning("ADMIN_ID не задан")
         return False
-
     try:
         await notify_bot.send_message(chat_id, text, parse_mode="HTML")
         logger.info("Заявка отправлена админу %s от user %s", chat_id, user.id)
         return True
     except Exception as e:
-        logger.error("Не удалось отправить админу (chat_id=%s): %s", chat_id, e)
-        try:
-            await bot.send_message(chat_id, text, parse_mode="HTML")
-            logger.info("Заявка отправлена через основной бот")
-            return True
-        except Exception as e2:
-            logger.error("Повторная отправка тоже не удалась: %s", e2)
-            return False
+        logger.error("Ошибка отправки админу: %s", e)
+        return False
+
+
+async def process_order(data: dict, user, source: str = "api") -> bool:
+    text = format_request(data, user)
+    delivered = await notify_admin(text, user)
+    logger.info("Заявка [%s] от %s: delivered=%s", source, user.id, delivered)
+
+    try:
+        await bot.send_message(
+            user.id,
+            "✅ <b>Заявка отправлена!</b>\n\nАнтон получил заявку и ответит "
+            "(10:00 – 23:00).\n\nПриоритет: @KZENOF",
+            parse_mode="HTML",
+        )
+    except Exception as e:
+        logger.warning("Не удалось подтвердить пользователю: %s", e)
+
+    return delivered
+
+
+@dp.message(CommandStart())
+async def cmd_start(message: Message):
+    await message.answer(WELCOME, reply_markup=webapp_keyboard(), parse_mode="HTML")
+
+
+@dp.message(Command("test"))
+async def cmd_test(message: Message):
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("Команда только для администратора.")
+        return
+    await message.answer("✅ Бот работает!")
+    ok = await notify_admin("🔔 <b>Тест</b> — уведомления работают.", message.from_user)
+    await message.answer("✅ Уведомление отправлено." if ok else "❌ Не удалось отправить.")
 
 
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
     user = message.from_user
     raw = message.web_app_data.data
-    logger.info("Получена заявка от %s (%s): %s", user.full_name, user.id, raw[:200])
-
+    logger.info("web_app_data от %s: %s", user.id, raw[:200])
     try:
         data = json.loads(raw)
     except json.JSONDecodeError:
         data = {"raw": raw}
-
-    text = format_request(data, user)
-    delivered = await notify_admin(text, user)
-
-    if delivered:
-        await message.answer(
-            "✅ <b>Заявка отправлена!</b>\n\n"
-            "Антон получил вашу заявку и ответит в ближайшее время "
-            "(10:00 – 23:00).\n\n"
-            "Приоритетный канал связи: @KZENOF",
-            parse_mode="HTML",
-        )
-    else:
-        await message.answer(
-            "⚠️ <b>Заявка получена, но уведомление не доставлено.</b>\n\n"
-            "Напишите напрямую: @KZENOF\n\n"
-            f"<code>{text}</code>",
-            parse_mode="HTML",
-        )
+    await process_order(data, user, source="sendData")
 
 
-@dp.message(Command("test"))
-async def cmd_test(message: Message):
-    """Проверка: может ли бот писать вам в ЛС."""
-    if message.from_user.id != ADMIN_ID:
-        await message.answer("Команда только для администратора.")
-        return
-    await message.answer("✅ Бот работает! Заявки из Mini App будут приходить сюда.")
+async def api_options(_request):
+    return web.Response(headers=CORS_HEADERS)
+
+
+async def api_submit(request):
     try:
-        await bot.send_message(ADMIN_ID, "🔔 Тестовое уведомление — всё настроено верно.")
-        await message.answer("✅ Тестовое уведомление отправлено.")
-    except Exception as e:
-        await message.answer(
-            f"❌ Не могу отправить вам в ЛС: {e}\n\n"
-            "Нажмите /start в этом боте, если ещё не делали."
-        )
+        body = await request.json()
+    except json.JSONDecodeError:
+        return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400, headers=CORS_HEADERS)
+
+    user_data = validate_init_data(body.get("initData", ""))
+    if not user_data:
+        return web.json_response({"ok": False, "error": "Invalid initData"}, status=403, headers=CORS_HEADERS)
+
+    user = user_from_init(user_data)
+    data = body.get("data", {})
+    delivered = await process_order(data, user, source="api")
+    return web.json_response({"ok": delivered}, headers=CORS_HEADERS)
+
+
+async def start_web_server():
+    app = web.Application()
+    app.router.add_post("/api/submit", api_submit)
+    app.router.add_route("OPTIONS", "/api/submit", api_options)
+    if ASSETS_DIR.exists():
+        app.router.add_static("/", ASSETS_DIR, show_index=True)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, "0.0.0.0", PORT)
+    await site.start()
+    logger.info("HTTP API: http://0.0.0.0:%s/api/submit", PORT)
 
 
 async def set_menu_button():
-    """Устанавливает кнопку Mini App в меню бота."""
     try:
         await bot.set_chat_menu_button(
             menu_button=MenuButtonWebApp(
@@ -223,13 +283,14 @@ async def set_menu_button():
             )
         )
     except Exception as e:
-        logger.warning("Не удалось установить menu button: %s", e)
+        logger.warning("Menu button: %s", e)
 
 
 async def main():
+    await start_web_server()
     await set_menu_button()
     logger.info("Бот запущен. Mini App: %s", WEBAPP_URL)
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, handle_signals=False)
 
 
 if __name__ == "__main__":

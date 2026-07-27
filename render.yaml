@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: tg-portfolio-bot
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ADMIN_ID
+        sync: false
+      - key: WEBAPP_URL
+        sync: false
+      - key: GITHUB_USERNAME
+        value: kzenof

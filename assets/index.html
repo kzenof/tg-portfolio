@@ -653,6 +653,10 @@
 <script>
 // ─── Config ───
 const GITHUB_USERNAME = new URLSearchParams(location.search).get('gh') || 'kzenof';
+// URL API бота на Render (заполните после деплоя):
+const BOT_API_URL = 'https://ЗАМЕНИТЕ.onrender.com/api/submit'.includes('ЗАМЕНИТЕ')
+  ? ''
+  : 'https://ЗАМЕНИТЕ.onrender.com/api/submit';
 
 // ─── Telegram WebApp ───
 const tg = window.Telegram?.WebApp;
@@ -664,24 +668,41 @@ if (tg) {
 }
 
 function sendToBot(data) {
+  if (!tg?.initData) {
+    showToast('Откройте через кнопку «Открыть портфолио» в @Kzenof_dev_bot');
+    return;
+  }
+
+  submitOrder(data);
+}
+
+async function submitOrder(data) {
   const payload = JSON.stringify(data);
 
-  if (!tg) {
-    showToast('Откройте через бота @Kzenof_dev_bot');
-    console.log('Data:', data);
-    return;
+  // Способ 1: HTTP API (надёжнее, нужен деплой бота на Render)
+  if (BOT_API_URL) {
+    try {
+      const resp = await fetch(BOT_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ initData: tg.initData, data }),
+      });
+      const result = await resp.json();
+      if (result.ok) {
+        tg.showAlert('✅ Заявка отправлена! Антон ответит в ближайшее время.');
+        tg.close();
+        return;
+      }
+    } catch (e) {
+      console.warn('API error:', e);
+    }
   }
 
-  if (!tg.initData) {
-    showToast('Нажмите «Открыть портфолио» в боте, не прямую ссылку');
-    return;
-  }
-
+  // Способ 2: sendData (бот должен быть запущен, только 1 экземпляр!)
   try {
     tg.sendData(payload);
-    // Mini App закроется автоматически после sendData
   } catch (e) {
-    showToast('Ошибка отправки. Напишите @KZENOF');
+    showToast('Ошибка. Напишите @KZENOF');
     console.error(e);
   }
 }
