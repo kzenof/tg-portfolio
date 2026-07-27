@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Антон — Разработка под заказ</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --bg-card: #ffffff;
+      --bg-dark: #0d1f3c;
+      --accent: #2196f3;
+      --accent-light: #64b5f6;
+      --accent-orange: #ff9800;
+      --accent-indigo: #3f51b5;
+      --text: #1a1a2e;
+      --text-light: #e8eaf6;
+      --text-muted: #8892a4;
+      --border: #e0e6ed;
+      --radius: 14px;
+      --shadow: 0 4px 20px rgba(0,0,0,0.15);
+      --tg-theme: var(--accent);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text-light);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #0d1f3c 0%, #1a3a6b 100%);
+      padding: 24px 20px 20px;
+      text-align: center;
+    }
+    .header-icon {
+      width: 64px; height: 64px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 12px;
+      font-size: 28px;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    .header p {
+      font-size: 13px;
+      color: var(--accent-light);
+      margin-top: 4px;
+    }
+    .header .disclaimer {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    /* Navigation */
+    .nav {
+      display: flex;
+      overflow-x: auto;
+      gap: 6px;
+      padding: 12px 16px;
+      background: var(--bg-dark);
+      scrollbar-width: none;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .nav::-webkit-scrollbar { display: none; }
+    .nav-btn {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border: none;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .nav-btn.active {
+      background: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* Sections */
+    .section { display: none; padding: 16px; }
+    .section.active { display: block; }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 4px;
+    }
+    .card.blue::before { background: var(--accent); }
+    .card.indigo::before { background: var(--accent-indigo); }
+    .card.orange::before { background: var(--accent-orange); }
+    .card.green::before { background: #4caf50; }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      padding-left: 8px;
+    }
+    .card-desc {
+      font-size: 13px;
+      color: #666;
+      padding-left: 8px;
+      line-height: 1.5;
+    }
+    .card-price {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      padding-left: 8px;
+      margin-top: 6px;
+    }
+
+    /* Service cards (configurator) */
+    .service-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .service-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 16px;
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+      color: var(--text);
+    }
+    .service-card.selected {
+      border-color: var(--accent);
+      background: #e3f2fd;
+    }
+    .service-card .icon { font-size: 28px; margin-bottom: 8px; }
+    .service-card h3 { font-size: 15px; margin-bottom: 4px; }
+    .service-card p { font-size: 12px; color: #666; }
+
+    /* Options */
+    .options-group {
+      background: rgba(255,255,255,0.05);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin: 12px 0;
+    }
+    .options-group h4 {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 0;
+      cursor: pointer;
+    }
+    .checkbox-row input[type=checkbox] {
+      width: 18px; height: 18px;
+      accent-color: var(--accent);
+    }
+    .checkbox-row label {
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    /* Calculator */
+    .calc-category { margin-bottom: 16px; }
+    .calc-category h3 {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      padding-left: 10px;
+      border-left: 3px solid var(--accent);
+    }
+    .calc-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--bg-card);
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 6px;
+      cursor: pointer;
+      color: var(--text);
+      border: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .calc-item.selected {
+      border-color: var(--accent);
+      background: #e3f2fd;
+    }
+    .calc-item .name { font-size: 13px; flex: 1; }
+    .calc-item .price { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; margin-left: 8px; }
+
+    .calc-total {
+      background: linear-gradient(135deg, #1565c0, #2196f3);
+      border-radius: var(--radius);
+      padding: 18px;
+      text-align: center;
+      margin: 16px 0;
+    }
+    .calc-total .label { font-size: 13px; opacity: 0.85; }
+    .calc-total .amount { font-size: 32px; font-weight: 800; margin: 4px 0; }
+    .calc-total .note { font-size: 11px; opacity: 0.7; }
+
+    /* Form */
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 6px;
+    }
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 14px;
+      background: var(--bg-card);
+      color: var(--text);
+      outline: none;
+      transition: border 0.2s;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent);
+    }
+    .form-group textarea { resize: vertical; min-height: 100px; }
+
+    .step-indicator {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .step-dot {
+      flex: 1;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.15);
+    }
+    .step-dot.done { background: var(--accent); }
+
+    /* Portfolio */
+    .repo-card {
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 10px;
+      color: var(--text);
+    }
+    .repo-card h4 {
+      font-size: 14px;
+      color: var(--accent);
+      margin-bottom: 4px;
+    }
+    .repo-card p {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.4;
+      margin-bottom: 8px;
+    }
+    .repo-meta {
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      color: #999;
+    }
+    .repo-meta span { display: flex; align-items: center; gap: 4px; }
+
+    /* Contacts */
+    .contact-grid {
+      display: grid;
+      gap: 10px;
+    }
+    .contact-btn {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--bg-card);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-decoration: none;
+      color: var(--text);
+      transition: transform 0.15s;
+    }
+    .contact-btn:active { transform: scale(0.98); }
+    .contact-btn .icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .contact-btn .info h4 { font-size: 14px; font-weight: 600; }
+    .contact-btn .info p { font-size: 12px; color: #888; margin-top: 2px; }
+    .contact-btn.tg .icon { background: #e3f2fd; }
+    .contact-btn.vk .icon { background: #e8eaf6; }
+    .contact-btn.mail .icon { background: #fce4ec; }
+    .contact-btn.github .icon { background: #f3e5f5; }
+
+    /* About */
+    .about-text {
+      font-size: 14px;
+      line-height: 1.7;
+      color: var(--text-light);
+      opacity: 0.9;
+    }
+    .about-text p { margin-bottom: 12px; }
+    .schedule {
+      background: rgba(255,255,255,0.06);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .schedule h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent-light); }
+    .schedule-item {
+      display: flex;
+      justify-content: space-between;
+      font-size: 13px;
+      padding: 4px 0;
+      color: var(--text-muted);
+    }
+
+    /* Buttons */
+    .btn {
+      display: block;
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:active { background: #1976d2; }
+    .btn-primary:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+      color: var(--text-light);
+      margin-top: 8px;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn-row .btn { flex: 1; }
+
+    /* Banner */
+    .banner {
+      background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .banner h3 { font-size: 15px; margin-bottom: 4px; }
+    .banner p { font-size: 12px; opacity: 0.85; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 30px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid rgba(255,255,255,0.1);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #323232;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-size: 13px;
+      opacity: 0;
+      transition: all 0.3s;
+      z-index: 999;
+      pointer-events: none;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* File input */
+    .file-zone {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: border 0.2s;
+    }
+    .file-zone:hover { border-color: var(--accent); }
+    .file-zone input { display: none; }
+    .file-zone .file-icon { font-size: 28px; margin-bottom: 6px; }
+    .file-zone p { font-size: 12px; color: var(--text-muted); }
+    .file-name {
+      font-size: 12px;
+      color: var(--accent-light);
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">&lt;/&gt;</div>
+  <h1>Разработка под заказ</h1>
+  <p>Сайты · Приложения · Базы данных</p>
+  <div class="disclaimer">
+    Цены обсуждаются индивидуально · Указанные — ориентировочные ·<br>
+    Итоговая стоимость определяется после описания задачи
+  </div>
+</div>
+
+<nav class="nav" id="nav">
+  <button class="nav-btn active" data-tab="about">Обо мне</button>
+  <button class="nav-btn" data-tab="services">Услуги</button>
+  <button class="nav-btn" data-tab="calculator">Калькулятор</button>
+  <button class="nav-btn" data-tab="brief">Бриф</button>
+  <button class="nav-btn" data-tab="portfolio">Портфолио</button>
+  <button class="nav-btn" data-tab="contacts">Контакты</button>
+</nav>
+
+<!-- ОБО МНЕ -->
+<section class="section active" id="about">
+  <div class="about-text">
+    <p>Здравствуйте! Меня зовут <b>Антон</b>. Я разработчик, специализирующийся на <b>Python</b> и <b>C++</b>. В моём арсенале — веб-разработка, администрирование серверов и работа с базами данных <b>PostgreSQL</b> и <b>MySQL</b>.</p>
+    <p>При наличии домена могу развернуть сайт на указанном адресе. В основном работаю самостоятельно, но могу вступить в команду.</p>
+  </div>
+  <div class="schedule">
+    <h4>⏰ Режим работы</h4>
+    <div class="schedule-item"><span>Ответы на заявки</span><span>10:00 – 23:00</span></div>
+    <div class="schedule-item"><span>Работа над задачами</span><span>8:30 – 22:00</span></div>
+    <div class="schedule-item"><span>Ежедневно</span><span>без выходных</span></div>
+  </div>
+  <div class="banner" style="margin-top:16px">
+    <h3>🤝 Долгосрочное сотрудничество</h3>
+    <p>Правки любой сложности · Поддержка проектов</p>
+  </div>
+</section>
+
+<!-- УСЛУГИ (конфигуратор) -->
+<section class="section" id="services">
+  <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Выберите услугу и дополнительные опции:</p>
+  <div class="service-grid" id="serviceGrid"></div>
+
+  <div class="options-group">
+    <h4>Дополнительные опции</h4>
+    <div class="checkbox-row">
+      <input type="checkbox" id="optDb" value="База данных (PostgreSQL/MySQL)">
+      <label for="optDb">Нужна база данных (PostgreSQL / MySQL)</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="optDomain" value="Домен и хостинг">
+      <label for="optDomain">Есть домен / нужен хостинг</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="optAdmin" value="Админ-панель">
+      <label for="optAdmin">Админ-панель</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="optApi" value="API интеграции">
+      <label for="optApi">Интеграции (API, сторонние сервисы)</label>
+    </div>
+    <div class="checkbox-row">
+      <input type="checkbox" id="optDeploy" value="Деплой на сервер">
+      <label for="optDeploy">Деплой и настройка сервера</label>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" id="submitService" disabled>Оформить заявку</button>
+</section>
+
+<!-- КАЛЬКУЛЯТОР -->
+<section class="section" id="calculator">
+  <div id="calcContent"></div>
+  <div class="calc-total" id="calcTotal" style="display:none">
+    <div class="label">Ориентировочная стоимость</div>
+    <div class="amount" id="calcAmount">0 ₽</div>
+    <div class="note">* Точная цена определяется после обсуждения задачи</div>
+  </div>
+  <button class="btn btn-primary" id="submitCalc" style="display:none">Отправить расчёт</button>
+</section>
+
+<!-- БРИФ -->
+<section class="section" id="brief">
+  <div class="step-indicator" id="stepIndicator">
+    <div class="step-dot done"></div>
+    <div class="step-dot"></div>
+    <div class="step-dot"></div>
+  </div>
+
+  <div id="briefStep1">
+    <div class="form-group">
+      <label>Опишите суть задачи *</label>
+      <textarea id="briefTask" placeholder="Например: нужен Telegram-бот для приёма заявок с админ-панелью..."></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="briefNext(2)">Далее →</button>
+  </div>
+
+  <div id="briefStep2" style="display:none">
+    <div class="form-group">
+      <label>Ссылка на ТЗ (если есть)</label>
+      <input type="url" id="briefLink" placeholder="https://docs.google.com/...">
+    </div>
+    <div class="form-group">
+      <label>Желаемый дедлайн</label>
+      <input type="date" id="briefDeadline">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="briefNext(1)">← Назад</button>
+      <button class="btn btn-primary" onclick="briefNext(3)">Далее →</button>
+    </div>
+  </div>
+
+  <div id="briefStep3" style="display:none">
+    <div class="form-group">
+      <label>Контакт для связи (необязательно)</label>
+      <input type="text" id="briefContact" placeholder="@username или email">
+    </div>
+    <div class="form-group">
+      <label>Прикрепить файл (до 1 МБ)</label>
+      <div class="file-zone" onclick="document.getElementById('briefFile').click()">
+        <input type="file" id="briefFile" accept=".pdf,.doc,.docx,.txt,.zip,.png,.jpg">
+        <div class="file-icon">📎</div>
+        <p>Нажмите для выбора файла</p>
+        <div class="file-name" id="briefFileName"></div>
+      </div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="briefNext(2)">← Назад</button>
+      <button class="btn btn-primary" id="submitBrief">Отправить ТЗ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ПОРТФОЛИО -->
+<section class="section" id="portfolio">
+  <div id="portfolioContent">
+    <div class="loading">
+      <div class="spinner"></div>
+      Загрузка проектов с GitHub...
+    </div>
+  </div>
+</section>
+
+<!-- КОНТАКТЫ -->
+<section class="section" id="contacts">
+  <div class="contact-grid">
+    <a class="contact-btn tg" href="https://t.me/KZENOF" target="_blank">
+      <div class="icon">✈️</div>
+      <div class="info">
+        <h4>Telegram</h4>
+        <p>@KZENOF — приоритетный канал</p>
+      </div>
+    </a>
+    <a class="contact-btn vk" href="https://vk.ru/antonkalinskiy" target="_blank">
+      <div class="icon">💬</div>
+      <div class="info">
+        <h4>ВКонтакте</h4>
+        <p>vk.ru/antonkalinskiy</p>
+      </div>
+    </a>
+    <a class="contact-btn mail" href="mailto:antonkalinskij@gmail.com">
+      <div class="icon">📧</div>
+      <div class="info">
+        <h4>Gmail</h4>
+        <p>antonkalinskij@gmail.com</p>
+      </div>
+    </a>
+    <a class="contact-btn mail" href="mailto:antonkalinskij@mail.ru">
+      <div class="icon">📨</div>
+      <div class="info">
+        <h4>Mail.ru</h4>
+        <p>antonkalinskij@mail.ru</p>
+      </div>
+    </a>
+    <a class="contact-btn github" id="githubLink" href="#" target="_blank">
+      <div class="icon">🐙</div>
+      <div class="info">
+        <h4>GitHub</h4>
+        <p id="githubUsername">Загрузка...</p>
+      </div>
+    </a>
+  </div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── Config ───
+const GITHUB_USERNAME = new URLSearchParams(location.search).get('gh') || 'KZENOF';
+
+// ─── Telegram WebApp ───
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0a1628');
+  tg.setBackgroundColor('#0a1628');
+}
+
+function sendToBot(data) {
+  if (tg?.sendData) {
+    tg.sendData(JSON.stringify(data));
+    tg.close();
+  } else {
+    showToast('Откройте через Telegram-бота для отправки');
+    console.log('Data:', data);
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ─── Navigation ───
+document.getElementById('nav').addEventListener('click', e => {
+  const btn = e.target.closest('.nav-btn');
+  if (!btn) return;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(btn.dataset.tab).classList.add('active');
+});
+
+// ─── Services Configurator ───
+const SERVICES = [
+  { id: 'python', icon: '🐍', title: 'Разработка на Python', desc: 'FastAPI, aiogram, Django, скрипты, автоматизация', base: 3000 },
+  { id: 'cpp', icon: '⚙️', title: 'Разработка на C++', desc: 'Высокопроизводительные приложения, системное ПО', base: 5000 },
+  { id: 'admin', icon: '🖥️', title: 'Администрирование & Деплой', desc: 'Настройка серверов, CI/CD, Docker, мониторинг', base: 4000 },
+  { id: 'db', icon: '🗄️', title: 'Проектирование БД', desc: 'PostgreSQL, MySQL — схемы, миграции, оптимизация', base: 2500 },
+];
+
+let selectedService = null;
+
+const grid = document.getElementById('serviceGrid');
+SERVICES.forEach(s => {
+  const el = document.createElement('div');
+  el.className = 'service-card';
+  el.dataset.id = s.id;
+  el.innerHTML = `<div class="icon">${s.icon}</div><h3>${s.title}</h3><p>${s.desc}</p><div class="card-price">от ${s.base.toLocaleString('ru')} ₽</div>`;
+  el.addEventListener('click', () => {
+    document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+    selectedService = s;
+    document.getElementById('submitService').disabled = false;
+  });
+  grid.appendChild(el);
+});
+
+document.getElementById('submitService').addEventListener('click', () => {
+  if (!selectedService) return;
+  const options = [];
+  document.querySelectorAll('.options-group input:checked').forEach(cb => options.push(cb.value));
+
+  let price = selectedService.base;
+  if (document.getElementById('optDb').checked) price += 2500;
+  if (document.getElementById('optDomain').checked) price += 1000;
+  if (document.getElementById('optAdmin').checked) price += 3000;
+  if (document.getElementById('optApi').checked) price += 4000;
+  if (document.getElementById('optDeploy').checked) price += 3000;
+
+  sendToBot({
+    type: 'service',
+    service: selectedService.title,
+    options,
+    estimated_price: `от ${price.toLocaleString('ru')} ₽`,
+  });
+});
+
+// ─── Calculator ───
+const PRICE_LIST = {
+  sites: {
+    title: '🌐 Сайты',
+    color: 'blue',
+    items: [
+      { name: 'Landing / 1 страница', price: 1000 },
+      { name: 'До 5 страниц', price: 3000 },
+      { name: 'От 8 страниц', price: 6000 },
+      { name: 'С БД / формами / админкой', price: 11000 },
+    ],
+  },
+  apps: {
+    title: '📱 Приложения',
+    color: 'indigo',
+    items: [
+      { name: 'Простой скрипт, бот, автоматизация', price: 1500 },
+      { name: 'Скрипт со сложной логикой', price: 3000 },
+      { name: 'Приложение с интерфейсом', price: 6000 },
+      { name: 'С интеграциями (API, сервер, БД)', price: 10000 },
+    ],
+  },
+  databases: {
+    title: '🗄️ Базы данных',
+    color: 'orange',
+    items: [
+      { name: 'Простая схема + .sql файл', price: 1000 },
+      { name: 'БД + тестовые данные', price: 2500 },
+      { name: 'Удалённое подключение к хостингу', price: 4000 },
+      { name: 'БД + backend + деплой', price: 9000 },
+    ],
+  },
+};
+
+let calcSelection = { category: '', item: '', price: 0 };
+const calcExtras = [];
+
+const calcContent = document.getElementById('calcContent');
+Object.entries(PRICE_LIST).forEach(([key, cat]) => {
+  const div = document.createElement('div');
+  div.className = 'calc-category';
+  div.innerHTML = `<h3>${cat.title}</h3>`;
+  cat.items.forEach(item => {
+    const el = document.createElement('div');
+    el.className = 'calc-item';
+    el.innerHTML = `<span class="name">${item.name}</span><span class="price">от ${item.price.toLocaleString('ru')} ₽</span>`;
+    el.addEventListener('click', () => {
+      document.querySelectorAll('.calc-item').forEach(c => c.classList.remove('selected'));
+      el.classList.add('selected');
+      calcSelection = { category: cat.title, item: item.name, price: item.price };
+      updateCalcTotal();
+    });
+    div.appendChild(el);
+  });
+  calcContent.appendChild(div);
+});
+
+// Extra options for calculator
+const extrasDiv = document.createElement('div');
+extrasDiv.className = 'options-group';
+extrasDiv.innerHTML = `<h4>Дополнительно</h4>
+  <div class="checkbox-row"><input type="checkbox" id="calcDomain" value="Домен и хостинг"><label for="calcDomain">Домен и хостинг (отдельно)</label></div>
+  <div class="checkbox-row"><input type="checkbox" id="calcSupport" value="Поддержка"><label for="calcSupport">Долгосрочная поддержка</label></div>`;
+calcContent.appendChild(extrasDiv);
+
+function updateCalcTotal() {
+  const totalEl = document.getElementById('calcTotal');
+  const amountEl = document.getElementById('calcAmount');
+  const submitBtn = document.getElementById('submitCalc');
+
+  if (calcSelection.price > 0) {
+    totalEl.style.display = 'block';
+    submitBtn.style.display = 'block';
+    amountEl.textContent = `от ${calcSelection.price.toLocaleString('ru')} ₽`;
+  }
+}
+
+document.getElementById('submitCalc').addEventListener('click', () => {
+  const extras = [];
+  if (document.getElementById('calcDomain').checked) extras.push('Домен и хостинг');
+  if (document.getElementById('calcSupport').checked) extras.push('Долгосрочная поддержка');
+
+  sendToBot({
+    type: 'calculator',
+    category: calcSelection.category,
+    item: calcSelection.item,
+    price: `от ${calcSelection.price.toLocaleString('ru')} ₽`,
+    extras,
+  });
+});
+
+// ─── Brief Form ───
+let briefStep = 1;
+
+function briefNext(step) {
+  if (step === 2 && !document.getElementById('briefTask').value.trim()) {
+    showToast('Опишите задачу');
+    return;
+  }
+  briefStep = step;
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`briefStep${i}`).style.display = i === step ? 'block' : 'none';
+  }
+  document.querySelectorAll('.step-dot').forEach((d, i) => {
+    d.classList.toggle('done', i < step);
+  });
+}
+
+document.getElementById('briefFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  document.getElementById('briefFileName').textContent = f ? f.name : '';
+});
+
+document.getElementById('submitBrief').addEventListener('click', async () => {
+  const task = document.getElementById('briefTask').value.trim();
+  if (!task) { showToast('Опишите задачу'); briefNext(1); return; }
+
+  const data = {
+    type: 'brief',
+    task,
+    tz_link: document.getElementById('briefLink').value.trim(),
+    deadline: document.getElementById('briefDeadline').value,
+    contact: document.getElementById('briefContact').value.trim(),
+  };
+
+  const fileInput = document.getElementById('briefFile');
+  if (fileInput.files[0]) {
+    const file = fileInput.files[0];
+    if (file.size > 1024 * 1024) {
+      showToast('Файл слишком большой (макс. 1 МБ)');
+      return;
+    }
+    data.file_name = file.name;
+    // Note: actual file bytes can't be sent via sendData (4096 char limit)
+    // Bot receives filename; user can send file separately in chat
+  }
+
+  sendToBot(data);
+});
+
+// ─── Portfolio (GitHub API) ───
+async function loadPortfolio() {
+  const container = document.getElementById('portfolioContent');
+  document.getElementById('githubUsername').textContent = GITHUB_USERNAME;
+  document.getElementById('githubLink').href = `https://github.com/${GITHUB_USERNAME}`;
+
+  try {
+    const resp = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=10`);
+    if (!resp.ok) throw new Error('GitHub API error');
+    const repos = await resp.json();
+
+    if (!repos.length) {
+      container.innerHTML = '<div class="loading">Публичных репозиториев не найдено</div>';
+      return;
+    }
+
+    container.innerHTML = repos.map(r => `
+      <div class="repo-card">
+        <h4>${r.name}</h4>
+        <p>${r.description || 'Без описания'}</p>
+        <div class="repo-meta">
+          ${r.language ? `<span>💻 ${r.language}</span>` : ''}
+          <span>⭐ ${r.stargazers_count}</span>
+          <span>🍴 ${r.forks_count}</span>
+        </div>
+      </div>
+    `).join('');
+  } catch (e) {
+    container.innerHTML = `<div class="loading">Не удалось загрузить GitHub.<br><small>Укажите username через ?gh=username</small></div>`;
+  }
+}
+loadPortfolio();
+</script>
+</body>
+</html>
