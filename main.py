@@ -33,7 +33,11 @@ logger = logging.getLogger(__name__)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://username.github.io/tg-portfolio/")
+WEBAPP_URL = os.getenv("WEBAPP_URL") or os.getenv("RENDER_EXTERNAL_URL", "")
+if WEBAPP_URL and not WEBAPP_URL.endswith("/"):
+    WEBAPP_URL += "/"
+if not WEBAPP_URL:
+    WEBAPP_URL = "https://username.github.io/tg-portfolio/"
 NOTIFY_BOT_TOKEN = os.getenv("NOTIFY_BOT_TOKEN")
 NOTIFY_CHAT_ID = int(os.getenv("NOTIFY_CHAT_ID", "0") or "0") or ADMIN_ID
 PORT = int(os.getenv("PORT", "8080"))
@@ -261,17 +265,29 @@ async def api_submit(request):
     return web.json_response({"ok": delivered}, headers=CORS_HEADERS)
 
 
+async def serve_index(_request):
+    index = ASSETS_DIR / "index.html"
+    if not index.exists():
+        return web.Response(text="index.html not found", status=404)
+    return web.FileResponse(index)
+
+
+async def health(_request):
+    return web.json_response({"ok": True})
+
+
 async def start_web_server():
     app = web.Application()
+    app.router.add_get("/", serve_index)
+    app.router.add_get("/index.html", serve_index)
+    app.router.add_get("/health", health)
     app.router.add_post("/api/submit", api_submit)
     app.router.add_route("OPTIONS", "/api/submit", api_options)
-    if ASSETS_DIR.exists():
-        app.router.add_static("/", ASSETS_DIR, show_index=True)
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)
     await site.start()
-    logger.info("HTTP API: http://0.0.0.0:%s/api/submit", PORT)
+    logger.info("HTTP: 0.0.0.0:%s  Mini App: %s", PORT, WEBAPP_URL)
 
 
 async def set_menu_button():
