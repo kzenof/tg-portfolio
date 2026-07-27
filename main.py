@@ -28,11 +28,14 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 WEBAPP_URL = os.getenv("WEBAPP_URL", "https://username.github.io/tg-portfolio/")
+NOTIFY_BOT_TOKEN = os.getenv("NOTIFY_BOT_TOKEN")
+NOTIFY_CHAT_ID = int(os.getenv("NOTIFY_CHAT_ID", "0") or "0") or ADMIN_ID
 
 if not BOT_TOKEN:
     raise ValueError("Укажите BOT_TOKEN в .env")
 
 bot = Bot(token=BOT_TOKEN)
+notify_bot = Bot(token=NOTIFY_BOT_TOKEN) if NOTIFY_BOT_TOKEN else bot
 dp = Dispatcher()
 
 
@@ -98,12 +101,18 @@ def format_request(data: dict, user) -> str:
             lines.append(f"💰 <b>Ориентир:</b> {data['estimated_price']}")
 
     elif req_type == "calculator":
-        lines += [
-            f"📋 <b>Тип:</b> Расчёт стоимости",
-            f"📁 <b>Категория:</b> {data.get('category', '—')}",
-            f"📦 <b>Позиция:</b> {data.get('item', '—')}",
-            f"💰 <b>Сумма:</b> {data.get('price', '—')}",
-        ]
+        lines.append("📋 <b>Тип:</b> Расчёт стоимости")
+        items = data.get("items", [])
+        if items:
+            lines.append("📦 <b>Выбрано:</b>")
+            for item in items:
+                lines.append(f"  • {item.get('category', '')}: {item.get('name', '')} — {item.get('price', '')}")
+        else:
+            lines += [
+                f"📁 <b>Категория:</b> {data.get('category', '—')}",
+                f"📦 <b>Позиция:</b> {data.get('item', '—')}",
+            ]
+        lines.append(f"💰 <b>Итого:</b> {data.get('price', '—')}")
         extras = data.get("extras", [])
         if extras:
             lines.append(f"➕ <b>Дополнительно:</b> {', '.join(extras)}")
@@ -134,33 +143,74 @@ def format_request(data: dict, user) -> str:
     return "\n".join(lines)
 
 
+async def notify_admin(text: str, user) -> bool:
+    """Отправляет заявку админу. Возвращает True если доставлено."""
+    chat_id = NOTIFY_CHAT_ID or ADMIN_ID
+    if not chat_id:
+        logger.warning("ADMIN_ID не задан")
+        return False
+
+    try:
+        await notify_bot.send_message(chat_id, text, parse_mode="HTML")
+        logger.info("Заявка отправлена админу %s от user %s", chat_id, user.id)
+        return True
+    except Exception as e:
+        logger.error("Не удалось отправить админу (chat_id=%s): %s", chat_id, e)
+        try:
+            await bot.send_message(chat_id, text, parse_mode="HTML")
+            logger.info("Заявка отправлена через основной бот")
+            return True
+        except Exception as e2:
+            logger.error("Повторная отправка тоже не удалась: %s", e2)
+            return False
+
+
 @dp.message(F.web_app_data)
 async def handle_web_app_data(message: Message):
     user = message.from_user
+    raw = message.web_app_data.data
+    logger.info("Получена заявка от %s (%s): %s", user.full_name, user.id, raw[:200])
+
     try:
-        data = json.loads(message.web_app_data.data)
+        data = json.loads(raw)
     except json.JSONDecodeError:
-        data = {"raw": message.web_app_data.data}
+        data = {"raw": raw}
 
     text = format_request(data, user)
+    delivered = await notify_admin(text, user)
 
-    # Подтверждение пользователю
-    await message.answer(
-        "✅ <b>Заявка отправлена!</b>\n\n"
-        "Антон получил вашу заявку и ответит в ближайшее время "
-        "(10:00 – 23:00).\n\n"
-        "Приоритетный канал связи: @KZENOF",
-        parse_mode="HTML",
-    )
-
-    # Уведомление админу
-    if ADMIN_ID:
-        try:
-            await bot.send_message(ADMIN_ID, text, parse_mode="HTML")
-        except Exception as e:
-            logger.error("Не удалось отправить админу: %s", e)
+    if delivered:
+        await message.answer(
+            "✅ <b>Заявка отправлена!</b>\n\n"
+            "Антон получил вашу заявку и ответит в ближайшее время "
+            "(10:00 – 23:00).\n\n"
+            "Приоритетный канал связи: @KZENOF",
+            parse_mode="HTML",
+        )
     else:
-        logger.warning("ADMIN_ID не задан — заявка только подтверждена пользователю")
+        await message.answer(
+            "⚠️ <b>Заявка получена, но уведомление не доставлено.</b>\n\n"
+            "Напишите напрямую: @KZENOF\n\n"
+            f"<code>{text}</code>",
+            parse_mode="HTML",
+        )
+
+
+@dp.message(Command("test"))
+async def cmd_test(message: Message):
+    """Проверка: может ли бот писать вам в ЛС."""
+    if message.from_user.id != ADMIN_ID:
+        await message.answer("Команда только для администратора.")
+        return
+    await message.answer("✅ Бот работает! Заявки из Mini App будут приходить сюда.")
+    try:
+        await bot.send_message(ADMIN_ID, "🔔 Тестовое уведомление — всё настроено верно.")
+        await message.answer("✅ Тестовое уведомление отправлено.")
+    except Exception as e:
+        await message.answer(
+            f"❌ Не могу отправить вам в ЛС: {e}\n\n"
+            "Нажмите /start в этом боте, если ещё не делали."
+        )
 
 
 async def set_menu_button():

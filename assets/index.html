@@ -218,6 +218,12 @@
       border-color: var(--accent);
       background: #e3f2fd;
     }
+    .calc-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
     .calc-item .name { font-size: 13px; flex: 1; }
     .calc-item .price { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; margin-left: 8px; }
 
@@ -529,6 +535,7 @@
 
 <!-- КАЛЬКУЛЯТОР -->
 <section class="section" id="calculator">
+  <p class="calc-hint">Можно выбрать несколько позиций — нажмите ещё раз, чтобы снять выбор.</p>
   <div id="calcContent"></div>
   <div class="calc-total" id="calcTotal" style="display:none">
     <div class="label">Ориентировочная стоимость</div>
@@ -645,7 +652,7 @@
 
 <script>
 // ─── Config ───
-const GITHUB_USERNAME = new URLSearchParams(location.search).get('gh') || 'KZENOF';
+const GITHUB_USERNAME = new URLSearchParams(location.search).get('gh') || 'kzenof';
 
 // ─── Telegram WebApp ───
 const tg = window.Telegram?.WebApp;
@@ -657,12 +664,25 @@ if (tg) {
 }
 
 function sendToBot(data) {
-  if (tg?.sendData) {
-    tg.sendData(JSON.stringify(data));
-    tg.close();
-  } else {
-    showToast('Откройте через Telegram-бота для отправки');
+  const payload = JSON.stringify(data);
+
+  if (!tg) {
+    showToast('Откройте через бота @Kzenof_dev_bot');
     console.log('Data:', data);
+    return;
+  }
+
+  if (!tg.initData) {
+    showToast('Нажмите «Открыть портфолио» в боте, не прямую ссылку');
+    return;
+  }
+
+  try {
+    tg.sendData(payload);
+    // Mini App закроется автоматически после sendData
+  } catch (e) {
+    showToast('Ошибка отправки. Напишите @KZENOF');
+    console.error(e);
   }
 }
 
@@ -762,8 +782,7 @@ const PRICE_LIST = {
   },
 };
 
-let calcSelection = { category: '', item: '', price: 0 };
-const calcExtras = [];
+let calcSelections = new Map();
 
 const calcContent = document.getElementById('calcContent');
 Object.entries(PRICE_LIST).forEach(([key, cat]) => {
@@ -771,13 +790,23 @@ Object.entries(PRICE_LIST).forEach(([key, cat]) => {
   div.className = 'calc-category';
   div.innerHTML = `<h3>${cat.title}</h3>`;
   cat.items.forEach(item => {
+    const itemKey = `${key}:${item.name}`;
     const el = document.createElement('div');
     el.className = 'calc-item';
+    el.dataset.key = itemKey;
     el.innerHTML = `<span class="name">${item.name}</span><span class="price">от ${item.price.toLocaleString('ru')} ₽</span>`;
     el.addEventListener('click', () => {
-      document.querySelectorAll('.calc-item').forEach(c => c.classList.remove('selected'));
-      el.classList.add('selected');
-      calcSelection = { category: cat.title, item: item.name, price: item.price };
+      if (calcSelections.has(itemKey)) {
+        calcSelections.delete(itemKey);
+        el.classList.remove('selected');
+      } else {
+        calcSelections.set(itemKey, {
+          category: cat.title,
+          name: item.name,
+          price: item.price,
+        });
+        el.classList.add('selected');
+      }
       updateCalcTotal();
     });
     div.appendChild(el);
@@ -797,24 +826,40 @@ function updateCalcTotal() {
   const totalEl = document.getElementById('calcTotal');
   const amountEl = document.getElementById('calcAmount');
   const submitBtn = document.getElementById('submitCalc');
+  const items = [...calcSelections.values()];
+  const total = items.reduce((sum, item) => sum + item.price, 0);
 
-  if (calcSelection.price > 0) {
+  if (items.length > 0) {
     totalEl.style.display = 'block';
     submitBtn.style.display = 'block';
-    amountEl.textContent = `от ${calcSelection.price.toLocaleString('ru')} ₽`;
+    amountEl.textContent = `от ${total.toLocaleString('ru')} ₽`;
+  } else {
+    totalEl.style.display = 'none';
+    submitBtn.style.display = 'none';
   }
 }
 
 document.getElementById('submitCalc').addEventListener('click', () => {
+  const items = [...calcSelections.values()];
+  if (!items.length) {
+    showToast('Выберите хотя бы одну позицию');
+    return;
+  }
+
   const extras = [];
   if (document.getElementById('calcDomain').checked) extras.push('Домен и хостинг');
   if (document.getElementById('calcSupport').checked) extras.push('Долгосрочная поддержка');
 
+  const total = items.reduce((sum, item) => sum + item.price, 0);
+
   sendToBot({
     type: 'calculator',
-    category: calcSelection.category,
-    item: calcSelection.item,
-    price: `от ${calcSelection.price.toLocaleString('ru')} ₽`,
+    items: items.map(i => ({
+      category: i.category,
+      name: i.name,
+      price: `от ${i.price.toLocaleString('ru')} ₽`,
+    })),
+    price: `от ${total.toLocaleString('ru')} ₽`,
     extras,
   });
 });
