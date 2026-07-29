@@ -460,6 +460,142 @@
       color: var(--accent-light);
       margin-top: 6px;
     }
+
+    /* Своё тз — оформление */
+    #brief {
+      animation: briefIn 0.45s ease;
+    }
+    @keyframes briefIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    #brief .brief-header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    #brief .brief-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      background: rgba(33, 150, 243, 0.15);
+      border: 1px solid rgba(100, 181, 246, 0.25);
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    #brief .brief-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(33, 150, 243, 0.35);
+    }
+    #brief .step-indicator { gap: 8px; margin-bottom: 20px; }
+    #brief .step-dot {
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.12);
+      transition: all 0.35s ease;
+    }
+    #brief .step-dot.done {
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.45);
+    }
+    #brief .step-dot.active {
+      background: linear-gradient(90deg, #42a5f5, #90caf9);
+      box-shadow: 0 0 14px rgba(100, 181, 246, 0.6);
+      transform: scaleY(1.3);
+    }
+    #brief .brief-step {
+      background: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(26, 58, 107, 0.55) 100%);
+      border: 1px solid rgba(100, 181, 246, 0.18);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+      animation: stepSlide 0.35s ease;
+    }
+    @keyframes stepSlide {
+      from { opacity: 0; transform: translateX(12px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    #brief .form-group label {
+      color: var(--accent-light);
+      font-weight: 500;
+      font-size: 13px;
+    }
+    #brief .form-group input,
+    #brief .form-group textarea {
+      background: rgba(255, 255, 255, 0.97);
+      border: 1px solid rgba(100, 181, 246, 0.25);
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    #brief .form-group input:focus,
+    #brief .form-group textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+    }
+    #brief .form-group textarea { min-height: 120px; }
+    #brief .file-zone {
+      background: rgba(33, 150, 243, 0.08);
+      border: 2px dashed rgba(100, 181, 246, 0.4);
+      border-radius: 12px;
+      padding: 28px 20px;
+      transition: all 0.25s ease;
+    }
+    #brief .file-zone:hover {
+      border-color: var(--accent-light);
+      background: rgba(33, 150, 243, 0.14);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.15);
+    }
+    #brief .file-zone.has-file {
+      border-color: var(--accent);
+      border-style: solid;
+      background: rgba(33, 150, 243, 0.18);
+    }
+    #brief .file-zone .file-icon {
+      font-size: 36px;
+      margin-bottom: 8px;
+      animation: fileFloat 2.5s ease-in-out infinite;
+    }
+    @keyframes fileFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+    #brief .file-zone p { color: rgba(232, 234, 246, 0.75); font-size: 13px; }
+    #brief .file-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #90caf9;
+      word-break: break-all;
+    }
+    #brief .deadline-wrap {
+      position: relative;
+    }
+    #brief .deadline-wrap input[type=date] {
+      color-scheme: dark;
+      cursor: pointer;
+    }
+    #brief .deadline-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 6px;
+    }
+    #brief .btn-primary {
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
+      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.35);
+    }
+    #brief .btn-primary:active {
+      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25);
+    }
+    #brief .btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: var(--text-light);
+    }
   </style>
 </head>
 <body>
@@ -478,7 +614,7 @@
   <button class="nav-btn active" data-tab="about">Обо мне</button>
   <button class="nav-btn" data-tab="services">Услуги</button>
   <button class="nav-btn" data-tab="calculator">Калькулятор</button>
-  <button class="nav-btn" data-tab="brief">Бриф</button>
+  <button class="nav-btn" data-tab="brief">Своё тз</button>
   <button class="nav-btn" data-tab="portfolio">Портфолио</button>
   <button class="nav-btn" data-tab="contacts">Контакты</button>
 </nav>
@@ -545,30 +681,36 @@
   <button class="btn btn-primary" id="submitCalc" style="display:none">Отправить расчёт</button>
 </section>
 
-<!-- БРИФ -->
+<!-- СВОЁ ТЗ -->
 <section class="section" id="brief">
+  <div class="brief-header">
+    <div class="brief-badge">Шаг <span id="briefStepNum">1</span> из 3</div>
+    <h2 class="brief-title" id="briefStepTitle">Опишите задачу</h2>
+  </div>
+
   <div class="step-indicator" id="stepIndicator">
-    <div class="step-dot done"></div>
+    <div class="step-dot done active"></div>
     <div class="step-dot"></div>
     <div class="step-dot"></div>
   </div>
 
-  <div id="briefStep1">
+  <div id="briefStep1" class="brief-step">
     <div class="form-group">
-      <label>Опишите суть задачи *</label>
+      <label>📝 Опишите суть задачи *</label>
       <textarea id="briefTask" placeholder="Например: нужен Telegram-бот для приёма заявок с админ-панелью..."></textarea>
     </div>
     <button class="btn btn-primary" onclick="briefNext(2)">Далее →</button>
   </div>
 
-  <div id="briefStep2" style="display:none">
+  <div id="briefStep2" class="brief-step" style="display:none">
     <div class="form-group">
-      <label>Ссылка на ТЗ (если есть)</label>
-      <input type="url" id="briefLink" placeholder="https://docs.google.com/...">
-    </div>
-    <div class="form-group">
-      <label>Желаемый дедлайн</label>
-      <input type="date" id="briefDeadline">
+      <label>📎 Прикрепить ТЗ (до 1 МБ)</label>
+      <div class="file-zone" id="briefFileZone" onclick="document.getElementById('briefFile').click()">
+        <input type="file" id="briefFile" accept=".pdf,.doc,.docx,.txt,.zip,.png,.jpg">
+        <div class="file-icon">📎</div>
+        <p>Нажмите для выбора файла</p>
+        <div class="file-name" id="briefFileName"></div>
+      </div>
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="briefNext(1)">← Назад</button>
@@ -576,19 +718,17 @@
     </div>
   </div>
 
-  <div id="briefStep3" style="display:none">
+  <div id="briefStep3" class="brief-step" style="display:none">
     <div class="form-group">
-      <label>Контакт для связи (необязательно)</label>
-      <input type="text" id="briefContact" placeholder="@username или email">
+      <label>📅 Желаемый дедлайн</label>
+      <div class="deadline-wrap">
+        <input type="date" id="briefDeadline">
+      </div>
+      <div class="deadline-hint">Необязательно — обсудим сроки вместе</div>
     </div>
     <div class="form-group">
-      <label>Прикрепить файл (до 1 МБ)</label>
-      <div class="file-zone" onclick="document.getElementById('briefFile').click()">
-        <input type="file" id="briefFile" accept=".pdf,.doc,.docx,.txt,.zip,.png,.jpg">
-        <div class="file-icon">📎</div>
-        <p>Нажмите для выбора файла</p>
-        <div class="file-name" id="briefFileName"></div>
-      </div>
+      <label>💬 Контакт для связи (необязательно)</label>
+      <input type="text" id="briefContact" placeholder="@username или email">
     </div>
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="briefNext(2)">← Назад</button>
@@ -911,6 +1051,8 @@ document.getElementById('submitCalc').addEventListener('click', () => {
 // ─── Brief Form ───
 let briefStep = 1;
 
+const BRIEF_STEP_TITLES = ['Опишите задачу', 'Прикрепите файл', 'Дедлайн и контакт'];
+
 function briefNext(step) {
   if (step === 2 && !document.getElementById('briefTask').value.trim()) {
     showToast('Опишите задачу');
@@ -920,14 +1062,19 @@ function briefNext(step) {
   for (let i = 1; i <= 3; i++) {
     document.getElementById(`briefStep${i}`).style.display = i === step ? 'block' : 'none';
   }
-  document.querySelectorAll('.step-dot').forEach((d, i) => {
+  document.querySelectorAll('#brief .step-dot').forEach((d, i) => {
     d.classList.toggle('done', i < step);
+    d.classList.toggle('active', i === step - 1);
   });
+  document.getElementById('briefStepNum').textContent = step;
+  document.getElementById('briefStepTitle').textContent = BRIEF_STEP_TITLES[step - 1];
 }
 
 document.getElementById('briefFile').addEventListener('change', e => {
   const f = e.target.files[0];
+  const zone = document.getElementById('briefFileZone');
   document.getElementById('briefFileName').textContent = f ? f.name : '';
+  zone.classList.toggle('has-file', !!f);
 });
 
 document.getElementById('submitBrief').addEventListener('click', async () => {
@@ -937,7 +1084,6 @@ document.getElementById('submitBrief').addEventListener('click', async () => {
   const data = {
     type: 'brief',
     task,
-    tz_link: document.getElementById('briefLink').value.trim(),
     deadline: document.getElementById('briefDeadline').value,
     contact: document.getElementById('briefContact').value.trim(),
   };
