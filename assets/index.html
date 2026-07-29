@@ -7,20 +7,23 @@
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: #0a1628;
-      --bg-card: #ffffff;
-      --bg-dark: #0d1f3c;
+      --bg: #060d18;
+      --bg-card: rgba(255, 255, 255, 0.97);
+      --bg-dark: #0a1628;
+      --bg-panel: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(26, 58, 107, 0.5) 100%);
       --accent: #2196f3;
       --accent-light: #64b5f6;
       --accent-orange: #ff9800;
-      --accent-indigo: #3f51b5;
+      --accent-indigo: #7c4dff;
+      --accent-teal: #26c6da;
+      --accent-green: #66bb6a;
       --text: #1a1a2e;
       --text-light: #e8eaf6;
       --text-muted: #8892a4;
-      --border: #e0e6ed;
+      --border: rgba(100, 181, 246, 0.22);
       --radius: 14px;
-      --shadow: 0 4px 20px rgba(0,0,0,0.15);
-      --tg-theme: var(--accent);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
+      --glow: 0 0 14px rgba(33, 150, 243, 0.35);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -28,6 +31,10 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: var(--bg);
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(33, 150, 243, 0.18), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 50%, rgba(124, 77, 255, 0.08), transparent),
+        radial-gradient(ellipse 50% 30% at 0% 80%, rgba(38, 198, 218, 0.07), transparent);
       color: var(--text-light);
       min-height: 100vh;
       padding-bottom: 80px;
@@ -35,43 +42,66 @@
 
     /* Header */
     .header {
-      background: linear-gradient(135deg, #0d1f3c 0%, #1a3a6b 100%);
-      padding: 24px 20px 20px;
+      background: linear-gradient(135deg, #0a1628 0%, #1a3a6b 55%, #0d2847 100%);
+      padding: 26px 20px 22px;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .header::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(100, 181, 246, 0.15), transparent 60%);
+      pointer-events: none;
     }
     .header-icon {
-      width: 64px; height: 64px;
-      background: rgba(255,255,255,0.1);
+      width: 68px; height: 68px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(100, 181, 246, 0.3);
       border-radius: 50%;
       display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 12px;
+      margin: 0 auto 14px;
       font-size: 28px;
+      box-shadow: var(--glow);
+      animation: iconPulse 3s ease-in-out infinite;
+      position: relative;
+    }
+    @keyframes iconPulse {
+      0%, 100% { box-shadow: 0 0 12px rgba(33, 150, 243, 0.3); }
+      50% { box-shadow: 0 0 22px rgba(100, 181, 246, 0.55); }
     }
     .header h1 {
       font-size: 20px;
       font-weight: 700;
       letter-spacing: 1px;
       text-transform: uppercase;
+      text-shadow: 0 0 24px rgba(33, 150, 243, 0.4);
+      position: relative;
     }
     .header p {
       font-size: 13px;
       color: var(--accent-light);
-      margin-top: 4px;
+      margin-top: 6px;
+      position: relative;
     }
     .header .disclaimer {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 10px;
+      margin-top: 12px;
       line-height: 1.5;
+      position: relative;
     }
 
     /* Navigation */
     .nav {
       display: flex;
       overflow-x: auto;
-      gap: 6px;
+      gap: 8px;
       padding: 12px 16px;
-      background: var(--bg-dark);
+      background: rgba(10, 22, 40, 0.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(100, 181, 246, 0.12);
       scrollbar-width: none;
       position: sticky;
       top: 0;
@@ -80,33 +110,96 @@
     .nav::-webkit-scrollbar { display: none; }
     .nav-btn {
       flex-shrink: 0;
-      padding: 8px 14px;
-      border: none;
+      padding: 9px 15px;
+      border: 1px solid rgba(255,255,255,0.06);
       border-radius: 20px;
-      background: rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.06);
       color: var(--text-muted);
       font-size: 13px;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.25s ease;
       white-space: nowrap;
     }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-light); }
     .nav-btn.active {
-      background: var(--accent);
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
+      border-color: transparent;
       color: #fff;
       font-weight: 600;
+      box-shadow: 0 4px 14px rgba(33, 150, 243, 0.4);
     }
 
     /* Sections */
     .section { display: none; padding: 16px; }
-    .section.active { display: block; }
+    .section.active {
+      display: block;
+      animation: sectionIn 0.4s ease;
+    }
+    @keyframes sectionIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
 
-    /* Cards */
-    .card {
-      background: var(--bg-card);
+    /* Section headers */
+    .section-head {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .section-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+      border: 1px solid rgba(100, 181, 246, 0.25);
+      background: rgba(33, 150, 243, 0.12);
+      color: var(--accent-light);
+    }
+    #about .section-badge { background: rgba(124, 77, 255, 0.15); border-color: rgba(124, 77, 255, 0.3); color: #b388ff; }
+    #services .section-badge { background: rgba(33, 150, 243, 0.15); color: #90caf9; }
+    #calculator .section-badge { background: rgba(38, 198, 218, 0.12); border-color: rgba(38, 198, 218, 0.3); color: #80deea; }
+    #brief .section-badge { background: rgba(255, 152, 0, 0.12); border-color: rgba(255, 152, 0, 0.3); color: #ffcc80; }
+    #portfolio .section-badge { background: rgba(102, 187, 106, 0.12); border-color: rgba(102, 187, 106, 0.3); color: #a5d6a7; }
+    #contacts .section-badge { background: rgba(236, 64, 122, 0.1); border-color: rgba(236, 64, 122, 0.25); color: #f48fb1; }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
+    }
+    .section-hint {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    /* Glass panels */
+    .panel {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 12px;
-      color: var(--text);
+      box-shadow: var(--shadow);
+    }
+    .panel-accent-indigo { border-left: 3px solid var(--accent-indigo); }
+    .panel-accent-teal { border-left: 3px solid var(--accent-teal); }
+    .panel-accent-orange { border-left: 3px solid var(--accent-orange); }
+
+    /* Cards (legacy) */
+    .card {
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 12px;
+      color: var(--text-light);
       box-shadow: var(--shadow);
       position: relative;
       overflow: hidden;
@@ -120,130 +213,131 @@
     .card.blue::before { background: var(--accent); }
     .card.indigo::before { background: var(--accent-indigo); }
     .card.orange::before { background: var(--accent-orange); }
-    .card.green::before { background: #4caf50; }
+    .card.green::before { background: var(--accent-green); }
 
-    .card-title {
-      font-size: 15px;
-      font-weight: 700;
-      margin-bottom: 8px;
-      padding-left: 8px;
-    }
-    .card-desc {
-      font-size: 13px;
-      color: #666;
-      padding-left: 8px;
-      line-height: 1.5;
-    }
-    .card-price {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--accent);
-      padding-left: 8px;
-      margin-top: 6px;
-    }
+    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 8px; padding-left: 8px; }
+    .card-desc { font-size: 13px; color: var(--text-muted); padding-left: 8px; line-height: 1.5; }
+    .card-price { font-size: 14px; font-weight: 600; color: var(--accent-light); padding-left: 8px; margin-top: 6px; }
 
-    /* Service cards (configurator) */
-    .service-grid {
-      display: grid;
-      gap: 10px;
-    }
+    /* Service cards */
+    .service-grid { display: grid; gap: 10px; }
     .service-card {
-      background: var(--bg-card);
+      background: var(--bg-panel);
+      border: 2px solid rgba(100, 181, 246, 0.15);
       border-radius: var(--radius);
       padding: 16px;
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: all 0.2s;
-      color: var(--text);
+      transition: all 0.25s ease;
+      color: var(--text-light);
+      box-shadow: var(--shadow);
+    }
+    .service-card:hover {
+      border-color: rgba(100, 181, 246, 0.35);
+      transform: translateY(-2px);
     }
     .service-card.selected {
       border-color: var(--accent);
-      background: #e3f2fd;
+      background: linear-gradient(160deg, rgba(25, 118, 210, 0.35) 0%, rgba(13, 31, 60, 0.95) 100%);
+      box-shadow: 0 0 20px rgba(33, 150, 243, 0.25);
     }
-    .service-card .icon { font-size: 28px; margin-bottom: 8px; }
+    .service-card .icon { font-size: 30px; margin-bottom: 8px; }
     .service-card h3 { font-size: 15px; margin-bottom: 4px; }
-    .service-card p { font-size: 12px; color: #666; }
+    .service-card p { font-size: 12px; color: var(--text-muted); }
 
     /* Options */
     .options-group {
-      background: rgba(255,255,255,0.05);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
       margin: 12px 0;
+      box-shadow: var(--shadow);
     }
     .options-group h4 {
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--accent-light);
       margin-bottom: 10px;
+      font-weight: 600;
     }
     .checkbox-row {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 0;
+      padding: 9px 8px;
       cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.2s;
     }
-    .checkbox-row input[type=checkbox] {
-      width: 18px; height: 18px;
-      accent-color: var(--accent);
-    }
-    .checkbox-row label {
-      font-size: 14px;
-      cursor: pointer;
-    }
+    .checkbox-row:hover { background: rgba(255,255,255,0.04); }
+    .checkbox-row input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); }
+    .checkbox-row label { font-size: 14px; cursor: pointer; color: var(--text-light); }
 
     /* Calculator */
     .calc-category { margin-bottom: 16px; }
     .calc-category h3 {
       font-size: 14px;
       font-weight: 600;
-      margin-bottom: 8px;
-      padding-left: 10px;
-      border-left: 3px solid var(--accent);
+      margin-bottom: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(38, 198, 218, 0.1);
+      border-left: 3px solid var(--accent-teal);
+      color: #80deea;
     }
     .calc-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      background: var(--bg-card);
+      background: var(--bg-panel);
+      border: 2px solid rgba(100, 181, 246, 0.12);
       border-radius: 10px;
       padding: 12px 14px;
       margin-bottom: 6px;
       cursor: pointer;
-      color: var(--text);
-      border: 2px solid transparent;
-      transition: all 0.15s;
+      color: var(--text-light);
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
     }
+    .calc-item:hover { border-color: rgba(100, 181, 246, 0.3); }
     .calc-item.selected {
-      border-color: var(--accent);
-      background: #e3f2fd;
+      border-color: var(--accent-teal);
+      background: linear-gradient(160deg, rgba(38, 198, 218, 0.2) 0%, rgba(13, 31, 60, 0.95) 100%);
+      box-shadow: 0 0 16px rgba(38, 198, 218, 0.2);
     }
     .calc-hint {
       font-size: 12px;
       color: var(--text-muted);
       margin-bottom: 12px;
       line-height: 1.5;
+      text-align: center;
+      padding: 10px;
+      background: rgba(38, 198, 218, 0.08);
+      border-radius: 10px;
+      border: 1px solid rgba(38, 198, 218, 0.15);
     }
     .calc-item .name { font-size: 13px; flex: 1; }
-    .calc-item .price { font-size: 13px; font-weight: 700; color: var(--accent); white-space: nowrap; margin-left: 8px; }
+    .calc-item .price { font-size: 13px; font-weight: 700; color: #80deea; white-space: nowrap; margin-left: 8px; }
 
     .calc-total {
-      background: linear-gradient(135deg, #1565c0, #2196f3);
+      background: linear-gradient(135deg, #00695c 0%, #26c6da 50%, #00838f 100%);
       border-radius: var(--radius);
-      padding: 18px;
+      padding: 20px;
       text-align: center;
       margin: 16px 0;
+      box-shadow: 0 8px 24px rgba(38, 198, 218, 0.3);
+      border: 1px solid rgba(128, 222, 234, 0.25);
     }
-    .calc-total .label { font-size: 13px; opacity: 0.85; }
-    .calc-total .amount { font-size: 32px; font-weight: 800; margin: 4px 0; }
-    .calc-total .note { font-size: 11px; opacity: 0.7; }
+    .calc-total .label { font-size: 13px; opacity: 0.9; }
+    .calc-total .amount { font-size: 32px; font-weight: 800; margin: 4px 0; text-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+    .calc-total .note { font-size: 11px; opacity: 0.8; }
 
     /* Form */
     .form-group { margin-bottom: 14px; }
     .form-group label {
       display: block;
       font-size: 13px;
-      color: var(--text-muted);
+      color: var(--accent-light);
+      font-weight: 500;
       margin-bottom: 6px;
     }
     .form-group input,
@@ -251,113 +345,136 @@
     .form-group select {
       width: 100%;
       padding: 12px 14px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(100, 181, 246, 0.25);
       border-radius: 10px;
       font-size: 14px;
-      background: var(--bg-card);
+      background: rgba(255, 255, 255, 0.97);
       color: var(--text);
       outline: none;
-      transition: border 0.2s;
+      transition: border 0.2s, box-shadow 0.2s;
     }
     .form-group input:focus,
     .form-group textarea:focus {
       border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
     }
     .form-group textarea { resize: vertical; min-height: 100px; }
 
-    .step-indicator {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
+    .step-indicator { display: flex; gap: 8px; margin-bottom: 16px; }
     .step-dot {
       flex: 1;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(255,255,255,0.15);
+      height: 5px;
+      border-radius: 3px;
+      background: rgba(255,255,255,0.12);
+      transition: all 0.35s ease;
     }
-    .step-dot.done { background: var(--accent); }
+    .step-dot.done {
+      background: linear-gradient(90deg, var(--accent), var(--accent-light));
+      box-shadow: 0 0 10px rgba(33, 150, 243, 0.45);
+    }
+    .step-dot.active {
+      background: linear-gradient(90deg, #42a5f5, #90caf9);
+      box-shadow: 0 0 14px rgba(100, 181, 246, 0.6);
+      transform: scaleY(1.3);
+    }
 
     /* Portfolio */
     .repo-card {
-      background: var(--bg-card);
+      background: var(--bg-panel);
+      border: 1px solid rgba(102, 187, 106, 0.2);
+      border-left: 3px solid var(--accent-green);
       border-radius: var(--radius);
       padding: 14px;
       margin-bottom: 10px;
-      color: var(--text);
+      color: var(--text-light);
+      box-shadow: var(--shadow);
+      transition: transform 0.2s, box-shadow 0.2s;
     }
-    .repo-card h4 {
-      font-size: 14px;
-      color: var(--accent);
-      margin-bottom: 4px;
+    .repo-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(102, 187, 106, 0.15);
     }
-    .repo-card p {
-      font-size: 12px;
-      color: #666;
-      line-height: 1.4;
-      margin-bottom: 8px;
-    }
-    .repo-meta {
-      display: flex;
-      gap: 12px;
-      font-size: 12px;
-      color: #999;
-    }
+    .repo-card h4 { font-size: 14px; color: #a5d6a7; margin-bottom: 4px; }
+    .repo-card p { font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px; }
+    .repo-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; }
     .repo-meta span { display: flex; align-items: center; gap: 4px; }
 
     /* Contacts */
-    .contact-grid {
-      display: grid;
-      gap: 10px;
-    }
+    .contact-grid { display: grid; gap: 10px; }
     .contact-btn {
       display: flex;
       align-items: center;
       gap: 14px;
-      background: var(--bg-card);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
       text-decoration: none;
-      color: var(--text);
-      transition: transform 0.15s;
+      color: var(--text-light);
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow);
     }
+    .contact-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.3); }
     .contact-btn:active { transform: scale(0.98); }
     .contact-btn .icon {
-      width: 44px; height: 44px;
+      width: 46px; height: 46px;
       border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
       font-size: 22px;
       flex-shrink: 0;
     }
     .contact-btn .info h4 { font-size: 14px; font-weight: 600; }
-    .contact-btn .info p { font-size: 12px; color: #888; margin-top: 2px; }
-    .contact-btn.tg .icon { background: #e3f2fd; }
-    .contact-btn.vk .icon { background: #e8eaf6; }
-    .contact-btn.mail .icon { background: #fce4ec; }
-    .contact-btn.github .icon { background: #f3e5f5; }
+    .contact-btn .info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    .contact-btn.tg { border-left: 3px solid #42a5f5; }
+    .contact-btn.tg .icon { background: rgba(33, 150, 243, 0.2); }
+    .contact-btn.vk { border-left: 3px solid #7c4dff; }
+    .contact-btn.vk .icon { background: rgba(124, 77, 255, 0.2); }
+    .contact-btn.mail { border-left: 3px solid #ec407a; }
+    .contact-btn.mail .icon { background: rgba(236, 64, 122, 0.15); }
+    .contact-btn.github { border-left: 3px solid #ab47bc; }
+    .contact-btn.github .icon { background: rgba(171, 71, 188, 0.15); }
 
     /* About */
     .about-text {
       font-size: 14px;
-      line-height: 1.7;
+      line-height: 1.75;
       color: var(--text-light);
-      opacity: 0.9;
     }
     .about-text p { margin-bottom: 12px; }
+    .about-text b { color: #90caf9; }
+    .skill-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .skill-tag {
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(124, 77, 255, 0.15);
+      border: 1px solid rgba(124, 77, 255, 0.3);
+      color: #b388ff;
+    }
     .schedule {
-      background: rgba(255,255,255,0.06);
+      background: var(--bg-panel);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 14px;
       margin-top: 12px;
+      box-shadow: var(--shadow);
     }
-    .schedule h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent-light); }
+    .schedule h4 { font-size: 13px; margin-bottom: 10px; color: var(--accent-light); font-weight: 600; }
     .schedule-item {
       display: flex;
       justify-content: space-between;
       font-size: 13px;
-      padding: 4px 0;
+      padding: 6px 0;
       color: var(--text-muted);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
+    .schedule-item:last-child { border-bottom: none; }
+    .schedule-item span:last-child { color: #90caf9; font-weight: 500; }
 
     /* Buttons */
     .btn {
@@ -373,36 +490,43 @@
       text-align: center;
     }
     .btn-primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, #1976d2, #42a5f5);
       color: #fff;
+      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.35);
     }
-    .btn-primary:active { background: #1976d2; }
+    .btn-primary:active { box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25); }
     .btn-primary:disabled {
-      background: #555;
+      background: rgba(255,255,255,0.1);
+      color: var(--text-muted);
+      box-shadow: none;
       cursor: not-allowed;
     }
     .btn-secondary {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
       color: var(--text-light);
-      margin-top: 8px;
     }
-    .btn-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 12px;
-    }
+    .btn-row { display: flex; gap: 8px; margin-top: 12px; }
     .btn-row .btn { flex: 1; }
 
-    /* Banner */
+    /* Banners */
     .banner {
-      background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
       border-radius: var(--radius);
       padding: 16px;
       text-align: center;
       margin: 12px 0;
+      border: 1px solid rgba(255,255,255,0.1);
     }
     .banner h3 { font-size: 15px; margin-bottom: 4px; }
-    .banner p { font-size: 12px; opacity: 0.85; }
+    .banner p { font-size: 12px; opacity: 0.9; }
+    .banner-blue {
+      background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
+      box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
+    }
+    .banner-purple {
+      background: linear-gradient(135deg, #4527a0 0%, #7c4dff 100%);
+      box-shadow: 0 6px 20px rgba(124, 77, 255, 0.25);
+    }
 
     /* Loading */
     .loading {
@@ -427,15 +551,19 @@
       bottom: 90px;
       left: 50%;
       transform: translateX(-50%) translateY(20px);
-      background: #323232;
+      background: linear-gradient(135deg, #1a3a6b, #0d2847);
+      border: 1px solid rgba(100, 181, 246, 0.3);
       color: #fff;
-      padding: 10px 20px;
-      border-radius: 8px;
+      padding: 12px 22px;
+      border-radius: 12px;
       font-size: 13px;
       opacity: 0;
       transition: all 0.3s;
       z-index: 999;
       pointer-events: none;
+      box-shadow: var(--glow);
+      max-width: 90%;
+      text-align: center;
     }
     .toast.show {
       opacity: 1;
@@ -444,119 +572,27 @@
 
     /* File input */
     .file-zone {
-      border: 2px dashed rgba(255,255,255,0.2);
-      border-radius: 10px;
-      padding: 20px;
-      text-align: center;
-      cursor: pointer;
-      transition: border 0.2s;
-    }
-    .file-zone:hover { border-color: var(--accent); }
-    .file-zone input { display: none; }
-    .file-zone .file-icon { font-size: 28px; margin-bottom: 6px; }
-    .file-zone p { font-size: 12px; color: var(--text-muted); }
-    .file-name {
-      font-size: 12px;
-      color: var(--accent-light);
-      margin-top: 6px;
-    }
-
-    /* Своё тз — оформление */
-    #brief {
-      animation: briefIn 0.45s ease;
-    }
-    @keyframes briefIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    #brief .brief-header {
-      text-align: center;
-      margin-bottom: 18px;
-    }
-    #brief .brief-badge {
-      display: inline-block;
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: var(--accent-light);
-      background: rgba(33, 150, 243, 0.15);
-      border: 1px solid rgba(100, 181, 246, 0.25);
-      padding: 5px 12px;
-      border-radius: 20px;
-      margin-bottom: 8px;
-    }
-    #brief .brief-title {
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
-      text-shadow: 0 0 20px rgba(33, 150, 243, 0.35);
-    }
-    #brief .step-indicator { gap: 8px; margin-bottom: 20px; }
-    #brief .step-dot {
-      height: 5px;
-      border-radius: 3px;
-      background: rgba(255,255,255,0.12);
-      transition: all 0.35s ease;
-    }
-    #brief .step-dot.done {
-      background: linear-gradient(90deg, var(--accent), var(--accent-light));
-      box-shadow: 0 0 10px rgba(33, 150, 243, 0.45);
-    }
-    #brief .step-dot.active {
-      background: linear-gradient(90deg, #42a5f5, #90caf9);
-      box-shadow: 0 0 14px rgba(100, 181, 246, 0.6);
-      transform: scaleY(1.3);
-    }
-    #brief .brief-step {
-      background: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(26, 58, 107, 0.55) 100%);
-      border: 1px solid rgba(100, 181, 246, 0.18);
-      border-radius: var(--radius);
-      padding: 18px 16px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
-      animation: stepSlide 0.35s ease;
-    }
-    @keyframes stepSlide {
-      from { opacity: 0; transform: translateX(12px); }
-      to { opacity: 1; transform: translateX(0); }
-    }
-    #brief .form-group label {
-      color: var(--accent-light);
-      font-weight: 500;
-      font-size: 13px;
-    }
-    #brief .form-group input,
-    #brief .form-group textarea {
-      background: rgba(255, 255, 255, 0.97);
-      border: 1px solid rgba(100, 181, 246, 0.25);
-      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.06);
-      transition: border 0.2s, box-shadow 0.2s;
-    }
-    #brief .form-group input:focus,
-    #brief .form-group textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
-    }
-    #brief .form-group textarea { min-height: 120px; }
-    #brief .file-zone {
       background: rgba(33, 150, 243, 0.08);
       border: 2px dashed rgba(100, 181, 246, 0.4);
       border-radius: 12px;
       padding: 28px 20px;
+      text-align: center;
+      cursor: pointer;
       transition: all 0.25s ease;
     }
-    #brief .file-zone:hover {
+    .file-zone:hover {
       border-color: var(--accent-light);
       background: rgba(33, 150, 243, 0.14);
       transform: translateY(-2px);
       box-shadow: 0 6px 20px rgba(33, 150, 243, 0.15);
     }
-    #brief .file-zone.has-file {
+    .file-zone.has-file {
       border-color: var(--accent);
       border-style: solid;
       background: rgba(33, 150, 243, 0.18);
     }
-    #brief .file-zone .file-icon {
+    .file-zone input { display: none; }
+    .file-zone .file-icon {
       font-size: 36px;
       margin-bottom: 8px;
       animation: fileFloat 2.5s ease-in-out infinite;
@@ -565,37 +601,42 @@
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-4px); }
     }
-    #brief .file-zone p { color: rgba(232, 234, 246, 0.75); font-size: 13px; }
-    #brief .file-name {
+    .file-zone p { font-size: 13px; color: rgba(232, 234, 246, 0.75); }
+    .file-name {
       font-size: 13px;
       font-weight: 600;
       color: #90caf9;
+      margin-top: 6px;
       word-break: break-all;
     }
-    #brief .deadline-wrap {
-      position: relative;
+
+    /* Brief steps */
+    .brief-step {
+      animation: stepSlide 0.35s ease;
     }
-    #brief .deadline-wrap input[type=date] {
-      color-scheme: dark;
-      cursor: pointer;
+    @keyframes stepSlide {
+      from { opacity: 0; transform: translateX(12px); }
+      to { opacity: 1; transform: translateX(0); }
     }
-    #brief .deadline-hint {
+    #brief .form-group textarea { min-height: 120px; }
+    .deadline-hint {
       font-size: 11px;
       color: var(--text-muted);
       margin-top: 6px;
     }
-    #brief .btn-primary {
-      background: linear-gradient(135deg, #1976d2, #42a5f5);
-      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.35);
+    .deadline-wrap input[type=date] { color-scheme: dark; cursor: pointer; }
+
+    .price-box {
+      background: linear-gradient(135deg, #e65100 0%, #ff9800 50%, #ffb74d 100%);
+      border-radius: var(--radius);
+      padding: 18px;
+      text-align: center;
+      margin: 14px 0;
+      box-shadow: 0 8px 24px rgba(255, 152, 0, 0.25);
+      border: 1px solid rgba(255, 204, 128, 0.3);
     }
-    #brief .btn-primary:active {
-      box-shadow: 0 2px 8px rgba(33, 150, 243, 0.25);
-    }
-    #brief .btn-secondary {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: var(--text-light);
-    }
+    .price-box .label { font-size: 13px; opacity: 0.9; }
+    .price-box .amount { font-size: 28px; font-weight: 800; margin: 4px 0; }
   </style>
 </head>
 <body>
@@ -621,9 +662,21 @@
 
 <!-- ОБО МНЕ -->
 <section class="section active" id="about">
-  <div class="about-text">
-    <p>Здравствуйте! Меня зовут <b>Антон</b>. Я разработчик, специализирующийся на <b>Python</b> и <b>C++</b>. В моём арсенале — веб-разработка, администрирование серверов и работа с базами данных <b>PostgreSQL</b> и <b>MySQL</b>.</p>
-    <p>При наличии домена могу развернуть сайт на указанном адресе. В основном работаю самостоятельно, но могу вступить в команду.</p>
+  <div class="section-head">
+    <div class="section-badge">👋 Знакомство</div>
+    <h2 class="section-title">Обо мне</h2>
+  </div>
+  <div class="panel panel-accent-indigo">
+    <div class="about-text">
+      <p>Здравствуйте! Меня зовут <b>Антон</b>. Я разработчик, специализирующийся на <b>Python</b> и <b>C++</b>. В моём арсенале — веб-разработка, администрирование серверов и работа с базами данных <b>PostgreSQL</b> и <b>MySQL</b>.</p>
+      <p>При наличии домена могу развернуть сайт на указанном адресе. В основном работаю самостоятельно, но могу вступить в команду.</p>
+    </div>
+    <div class="skill-tags">
+      <span class="skill-tag">🐍 Python</span>
+      <span class="skill-tag">⚙️ C++</span>
+      <span class="skill-tag">🗄️ PostgreSQL</span>
+      <span class="skill-tag">🚀 DevOps</span>
+    </div>
   </div>
   <div class="schedule">
     <h4>⏰ Режим работы</h4>
@@ -631,7 +684,7 @@
     <div class="schedule-item"><span>Работа над задачами</span><span>8:30 – 22:00</span></div>
     <div class="schedule-item"><span>Ежедневно</span><span>без выходных</span></div>
   </div>
-  <div class="banner" style="margin-top:16px">
+  <div class="banner banner-purple">
     <h3>🤝 Долгосрочное сотрудничество</h3>
     <p>Правки любой сложности · Поддержка проектов</p>
   </div>
@@ -639,7 +692,11 @@
 
 <!-- УСЛУГИ (конфигуратор) -->
 <section class="section" id="services">
-  <p style="font-size:13px;color:var(--text-muted);margin-bottom:12px">Выберите услугу и дополнительные опции:</p>
+  <div class="section-head">
+    <div class="section-badge">🔧 Услуги</div>
+    <h2 class="section-title">Конфигуратор</h2>
+  </div>
+  <p class="section-hint">Выберите услугу и дополнительные опции</p>
   <div class="service-grid" id="serviceGrid"></div>
 
   <div class="options-group">
@@ -671,7 +728,11 @@
 
 <!-- КАЛЬКУЛЯТОР -->
 <section class="section" id="calculator">
-  <p class="calc-hint">Можно выбрать несколько позиций — нажмите ещё раз, чтобы снять выбор.</p>
+  <div class="section-head">
+    <div class="section-badge">🧮 Калькулятор</div>
+    <h2 class="section-title">Расчёт стоимости</h2>
+  </div>
+  <p class="calc-hint">Можно выбрать несколько позиций — нажми ещё раз, чтобы снять выбор</p>
   <div id="calcContent"></div>
   <div class="calc-total" id="calcTotal" style="display:none">
     <div class="label">Ориентировочная стоимость</div>
@@ -683,9 +744,9 @@
 
 <!-- СВОЁ ТЗ -->
 <section class="section" id="brief">
-  <div class="brief-header">
-    <div class="brief-badge">Шаг <span id="briefStepNum">1</span> из 3</div>
-    <h2 class="brief-title" id="briefStepTitle">Опишите задачу</h2>
+  <div class="section-head">
+    <div class="section-badge">Шаг <span id="briefStepNum">1</span> из 3</div>
+    <h2 class="section-title" id="briefStepTitle">Опишите задачу</h2>
   </div>
 
   <div class="step-indicator" id="stepIndicator">
@@ -694,7 +755,7 @@
     <div class="step-dot"></div>
   </div>
 
-  <div id="briefStep1" class="brief-step">
+  <div id="briefStep1" class="panel brief-step">
     <div class="form-group">
       <label>📝 Опишите суть задачи *</label>
       <textarea id="briefTask" placeholder="Например: нужен Telegram-бот для приёма заявок с админ-панелью..."></textarea>
@@ -702,7 +763,7 @@
     <button class="btn btn-primary" onclick="briefNext(2)">Далее →</button>
   </div>
 
-  <div id="briefStep2" class="brief-step" style="display:none">
+  <div id="briefStep2" class="panel brief-step" style="display:none">
     <div class="form-group">
       <label>📎 Прикрепить ТЗ (до 1 МБ)</label>
       <div class="file-zone" id="briefFileZone" onclick="document.getElementById('briefFile').click()">
@@ -718,7 +779,7 @@
     </div>
   </div>
 
-  <div id="briefStep3" class="brief-step" style="display:none">
+  <div id="briefStep3" class="panel brief-step" style="display:none">
     <div class="form-group">
       <label>📅 Желаемый дедлайн</label>
       <div class="deadline-wrap">
@@ -739,6 +800,10 @@
 
 <!-- ПОРТФОЛИО -->
 <section class="section" id="portfolio">
+  <div class="section-head">
+    <div class="section-badge">💼 Портфолио</div>
+    <h2 class="section-title">Проекты на GitHub</h2>
+  </div>
   <div id="portfolioContent">
     <div class="loading">
       <div class="spinner"></div>
@@ -749,6 +814,10 @@
 
 <!-- КОНТАКТЫ -->
 <section class="section" id="contacts">
+  <div class="section-head">
+    <div class="section-badge">📬 Связь</div>
+    <h2 class="section-title">Контакты</h2>
+  </div>
   <div class="contact-grid">
     <a class="contact-btn tg" href="https://t.me/KZENOF" target="_blank">
       <div class="icon">✈️</div>
