@@ -807,13 +807,13 @@ if (tg) {
   tg.setBackgroundColor('#0a1628');
 }
 
-function sendToBot(data) {
+function sendToBot(data, file = null) {
   if (!tg?.initData) {
     showToast('Откройте через кнопку «Открыть портфолио» в @Kzenof_dev_bot');
     return;
   }
 
-  submitOrder(data);
+  submitOrder(data, file);
 }
 
 function onSubmitSuccess() {
@@ -832,18 +832,28 @@ function onSubmitSuccess() {
   }
 }
 
-async function submitOrder(data) {
+async function submitOrder(data, file = null) {
   const payload = JSON.stringify(data);
 
   if (BOT_API_URL) {
     try {
+      const headers = { 'Authorization': `tma ${tg.initData}` };
+      let body;
+
+      if (file) {
+        const form = new FormData();
+        form.append('data', JSON.stringify(data));
+        form.append('file', file, file.name);
+        body = form;
+      } else {
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify({ data });
+      }
+
       const resp = await fetch(BOT_API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `tma ${tg.initData}`,
-        },
-        body: JSON.stringify({ data }),
+        headers,
+        body,
       });
       const result = await resp.json().catch(() => ({}));
       if (resp.ok && result.ok) {
@@ -1089,18 +1099,16 @@ document.getElementById('submitBrief').addEventListener('click', async () => {
   };
 
   const fileInput = document.getElementById('briefFile');
+  let file = null;
   if (fileInput.files[0]) {
-    const file = fileInput.files[0];
+    file = fileInput.files[0];
     if (file.size > 1024 * 1024) {
       showToast('Файл слишком большой (макс. 1 МБ)');
       return;
     }
-    data.file_name = file.name;
-    // Note: actual file bytes can't be sent via sendData (4096 char limit)
-    // Bot receives filename; user can send file separately in chat
   }
 
-  sendToBot(data);
+  sendToBot(data, file);
 });
 
 // ─── Portfolio (GitHub API) ───

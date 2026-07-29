@@ -20,6 +20,7 @@ from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
     MenuButtonWebApp,
+    BufferedInputFile,
 )
 from aiogram.utils.web_app import safe_parse_webapp_init_data
 from dotenv import load_dotenv
@@ -48,6 +49,8 @@ notify_bot = Bot(token=NOTIFY_BOT_TOKEN) if NOTIFY_BOT_TOKEN else bot
 dp = Dispatcher()
 
 ASSETS_DIR = Path(__file__).parent / "assets"
+MAX_FILE_SIZE = 1024 * 1024
+ALLOWED_FILE_EXT = {".pdf", ".doc", ".docx", ".txt", ".zip", ".png", ".jpg", ".jpeg"}
 
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
@@ -170,7 +173,7 @@ def format_request(data: dict, user) -> str:
         if data.get("contact"):
             lines.append(f"📞 <b>Контакт:</b> {data['contact']}")
         if data.get("file_name"):
-            lines.append(f"📎 <b>Файл:</b> {data['file_name']}")
+            lines.append(f"📎 <b>Файл:</b> {data['file_name']} (вложение ниже)")
 
     else:
         lines.append(f"📦 <b>Данные:</b>\n<code>{json.dumps(data, ensure_ascii=False)}</code>")
@@ -191,9 +194,40 @@ async def notify_admin(text: str, user) -> bool:
         return False
 
 
-async def process_order(data: dict, user, source: str = "api") -> bool:
+async def notify_admin_file(file_bytes: bytes, file_name: str, caption: str) -> bool:
+    chat_id = NOTIFY_CHAT_ID or ADMIN_ID
+    if not chat_id:
+        return False
+    try:
+        document = BufferedInputFile(file_bytes, filename=file_name)
+        await notify_bot.send_document(chat_id, document=document, caption=caption)
+        logger.info("Файл %s отправлен админу %s", file_name, chat_id)
+        return True
+    except Exception as e:
+        logger.error("Ошибка отправки файла админу: %s", e)
+        return False
+
+
+async def process_order(
+    data: dict,
+    user,
+    source: str = "api",
+    file_bytes: bytes | None = None,
+    file_name: str | None = None,
+) -> bool:
     text = format_request(data, user)
     delivered = await notify_admin(text, user)
+
+    if file_bytes and file_name:
+        user_obj = make_user(user)
+        username = f"@{user_obj.username}" if user_obj.username else user_obj.full_name
+        file_ok = await notify_admin_file(
+            file_bytes,
+            file_name,
+            f"📎 ТЗ от {username}",
+        )
+        delivered = delivered and file_ok
+
     logger.info("Заявка [%s] от %s: delivered=%s", source, user.id, delivered)
 
     try:
@@ -240,27 +274,76 @@ async def api_options(_request):
     return web.Response(headers=CORS_HEADERS)
 
 
-async def api_submit(request):
-    try:
-        body = await request.json()
-    except json.JSONDecodeError:
-        return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400, headers=CORS_HEADERS)
-
+def get_init_data(request, body: dict | None = None) -> str:
     auth = request.headers.get("Authorization", "")
     if auth.lower().startswith("tma "):
-        init_data = auth[4:].strip()
-    else:
-        init_data = body.get("initData", "")
+        return auth[4:].strip()
+    if body:
+        return body.get("initData", "")
+    return ""
+
+
+async def parse_submit_request(request):
+    """JSON или multipart/form-data с полем data и опциональным file."""
+    content_type = request.content_type or ""
+
+    if content_type.startswith("multipart/form-data"):
+        reader = await request.multipart()
+        data: dict = {}
+        file_bytes: bytes | None = None
+        file_name: str | None = None
+
+        while True:
+            part = await reader.next()
+            if part is None:
+                break
+            if part.name == "data":
+                raw = await part.text()
+                data = json.loads(raw) if raw else {}
+            elif part.name == "file":
+                file_bytes = await part.read(decode=False)
+                file_name = part.filename or "file"
+
+        return data, file_bytes, file_name
+
+    body = await request.json()
+    return body.get("data", {}), None, None
+
+
+async def api_submit(request):
+    content_type = request.content_type or ""
+    init_data = ""
+
+    try:
+        if content_type.startswith("multipart/form-data"):
+            init_data = get_init_data(request)
+            data, file_bytes, file_name = await parse_submit_request(request)
+        else:
+            body = await request.json()
+            init_data = get_init_data(request, body)
+            data = body.get("data", {})
+            file_bytes = None
+            file_name = None
+    except (json.JSONDecodeError, ValueError) as e:
+        logger.warning("api_submit parse error: %s", e)
+        return web.json_response({"ok": False, "error": "Invalid request"}, status=400, headers=CORS_HEADERS)
 
     user_data = validate_init_data(init_data)
     if not user_data:
         logger.warning("api_submit: invalid initData (len=%s)", len(init_data))
         return web.json_response({"ok": False, "error": "Invalid initData"}, status=403, headers=CORS_HEADERS)
 
+    if file_bytes is not None:
+        if len(file_bytes) > MAX_FILE_SIZE:
+            return web.json_response({"ok": False, "error": "File too large"}, status=400, headers=CORS_HEADERS)
+        ext = Path(file_name or "").suffix.lower()
+        if ext not in ALLOWED_FILE_EXT:
+            return web.json_response({"ok": False, "error": "File type not allowed"}, status=400, headers=CORS_HEADERS)
+        data["file_name"] = file_name
+
     user = user_from_init(user_data)
-    data = body.get("data", {})
-    logger.info("api_submit от user %s, type=%s", user.id, data.get("type"))
-    delivered = await process_order(data, user, source="api")
+    logger.info("api_submit от user %s, type=%s, file=%s", user.id, data.get("type"), bool(file_bytes))
+    delivered = await process_order(data, user, source="api", file_bytes=file_bytes, file_name=file_name)
     return web.json_response({"ok": delivered}, headers=CORS_HEADERS)
 
 
@@ -276,7 +359,7 @@ async def health(_request):
 
 
 async def start_web_server():
-    app = web.Application()
+    app = web.Application(client_max_size=MAX_FILE_SIZE + 512 * 1024)
     app.router.add_get("/", serve_index)
     app.router.add_get("/index.html", serve_index)
     app.router.add_get("/health", health)
