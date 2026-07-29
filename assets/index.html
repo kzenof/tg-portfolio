@@ -614,7 +614,7 @@
       <div class="icon">✈️</div>
       <div class="info">
         <h4>Telegram</h4>
-        <p>@KZENOF — приоритетный канал</p>
+        <p>Связь в тг - @KZENOF</p>
       </div>
     </a>
     <a class="contact-btn vk" href="https://vk.ru/antonkalinskiy" target="_blank">
@@ -676,6 +676,22 @@ function sendToBot(data) {
   submitOrder(data);
 }
 
+function onSubmitSuccess() {
+  const msg = '✅ Заявка отправлена! Антон ответит в ближайшее время.';
+  const close = () => { try { tg.close(); } catch (_) {} };
+  const desktop = ['macos', 'windows', 'linux', 'tdesktop', 'web', 'weba'].includes(tg.platform);
+
+  if (desktop) {
+    showToast(msg);
+    setTimeout(close, 900);
+  } else if (tg.showAlert) {
+    tg.showAlert(msg, close);
+  } else {
+    showToast(msg);
+    setTimeout(close, 1500);
+  }
+}
+
 async function submitOrder(data) {
   const payload = JSON.stringify(data);
 
@@ -691,8 +707,7 @@ async function submitOrder(data) {
       });
       const result = await resp.json().catch(() => ({}));
       if (resp.ok && result.ok) {
-        tg.showAlert('✅ Заявка отправлена! Антон ответит в ближайшее время.');
-        tg.close();
+        onSubmitSuccess();
         return;
       }
       const err = result.error || `HTTP ${resp.status}`;

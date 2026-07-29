@@ -200,7 +200,7 @@ async def process_order(data: dict, user, source: str = "api") -> bool:
         await bot.send_message(
             user.id,
             "✅ <b>Заявка отправлена!</b>\n\nАнтон получил заявку и ответит "
-            "(10:00 – 23:00).\n\nПриоритет: @KZENOF",
+            "(10:00 – 23:00).\n\nСвязь в тг - @KZENOF",
             parse_mode="HTML",
         )
     except Exception as e:
