@@ -371,6 +371,7 @@ async def start_web_server():
     app.router.add_get("/health", health)
     app.router.add_post("/api/submit", api_submit)
     app.router.add_route("OPTIONS", "/api/submit", api_options)
+    app.router.add_static("/icons/", ASSETS_DIR / "icons", name="icons")
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, "0.0.0.0", PORT)

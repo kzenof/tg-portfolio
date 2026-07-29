@@ -10,7 +10,7 @@
       --bg: #060d18;
       --bg-card: rgba(255, 255, 255, 0.97);
       --bg-dark: #0a1628;
-      --bg-panel: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(26, 58, 107, 0.5) 100%);
+      --bg-panel: linear-gradient(160deg, rgba(13, 31, 60, 0.92) 0%, rgba(26, 58, 107, 0.45) 100%);
       --accent: #2196f3;
       --accent-light: #64b5f6;
       --accent-orange: #ff9800;
@@ -19,9 +19,10 @@
       --accent-green: #66bb6a;
       --text: #1a1a2e;
       --text-light: #e8eaf6;
-      --text-muted: #8892a4;
-      --border: rgba(100, 181, 246, 0.22);
-      --radius: 14px;
+      --text-muted: #a8b3c7;
+      --border: rgba(255, 255, 255, 0.09);
+      --border-blue: rgba(100, 181, 246, 0.1);
+      --radius: 12px;
       --shadow: 0 8px 32px rgba(0, 0, 0, 0.28);
       --glow: 0 0 14px rgba(33, 150, 243, 0.35);
     }
@@ -38,7 +39,33 @@
       color: var(--text-light);
       min-height: 100vh;
       padding-bottom: 80px;
+      font-size: 14px;
+      font-weight: 400;
     }
+
+    /* Icon helper — SVG as background (colored strokes in files) */
+    .ico {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      background: center / contain no-repeat;
+      background-image: var(--ico);
+      vertical-align: middle;
+    }
+    .ico-sm { width: 15px; height: 15px; }
+    .ico-md { width: 20px; height: 20px; }
+    .ico-lg { width: 22px; height: 22px; }
+    .ico-python { --ico: url(icons/brand-python.svg); }
+    .ico-cpp { --ico: url(icons/brand-cpp.svg); }
+    .ico-sql { --ico: url(icons/sql.svg); }
+    .ico-server { --ico: url(icons/server.svg); }
+    .ico-html { --ico: url(icons/file-type-html.svg); }
+    .ico-app { --ico: url(icons/app-window.svg); }
+    .ico-tg { --ico: url(icons/brand-telegram.svg); }
+    .ico-vk { --ico: url(icons/brand-vk.svg); }
+    .ico-mail { --ico: url(icons/mail.svg); }
+    .ico-github { --ico: url(icons/brand-github.svg); }
 
     /* Header */
     .header {
@@ -93,17 +120,17 @@
       position: relative;
     }
 
-    /* Navigation — горизонтальный свайп, крупные зоны нажатия */
+    /* Navigation — одинаковая высота, radius 8px, иконки */
     .nav {
       display: flex;
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
       scroll-snap-type: x proximity;
-      gap: 10px;
-      padding: 14px 16px;
+      gap: 8px;
+      padding: 12px 14px;
       background: rgba(10, 22, 40, 0.92);
       backdrop-filter: blur(12px);
-      border-bottom: 1px solid rgba(100, 181, 246, 0.12);
+      border-bottom: 1px solid var(--border);
       scrollbar-width: none;
       position: sticky;
       top: 0;
@@ -113,18 +140,29 @@
     .nav-btn {
       flex-shrink: 0;
       scroll-snap-align: start;
-      min-height: 44px;
-      padding: 12px 20px;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      background: rgba(255,255,255,0.06);
-      color: rgba(232, 234, 246, 0.85);
-      font-size: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      height: 40px;
+      padding: 0 14px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      color: rgba(232, 234, 246, 0.88);
+      font-size: 13px;
+      font-weight: 400;
       cursor: pointer;
       transition: all 0.25s ease;
       white-space: nowrap;
     }
-    .nav-btn:hover { background: rgba(255,255,255,0.1); color: var(--text-light); }
+    .nav-btn svg {
+      width: 15px;
+      height: 15px;
+      flex-shrink: 0;
+      opacity: 0.85;
+    }
+    .nav-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
     .nav-btn.active {
       background: linear-gradient(135deg, #1976d2, #42a5f5);
       border-color: transparent;
@@ -132,6 +170,7 @@
       font-weight: 600;
       box-shadow: 0 4px 14px rgba(33, 150, 243, 0.4);
     }
+    .nav-btn.active svg { opacity: 1; }
 
     /* Sections */
     .section { display: none; padding: 16px; }
@@ -170,14 +209,15 @@
     #contacts .section-badge { background: rgba(236, 64, 122, 0.1); border-color: rgba(236, 64, 122, 0.25); color: #f48fb1; }
 
     .section-title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
       color: #fff;
       text-shadow: 0 0 20px rgba(33, 150, 243, 0.3);
     }
     .section-hint {
       font-size: 13px;
-      color: var(--text-muted);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.78);
       margin-bottom: 14px;
       line-height: 1.5;
       text-align: center;
@@ -188,13 +228,14 @@
       background: var(--bg-panel);
       border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 20px;
       margin-bottom: 12px;
       box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
     }
-    .panel-accent-indigo { border-left: 3px solid var(--accent-indigo); }
-    .panel-accent-teal { border-left: 3px solid var(--accent-teal); }
-    .panel-accent-orange { border-left: 3px solid var(--accent-orange); }
+    .panel-accent-indigo { border: 1px solid var(--border); border-left: 2px solid rgba(124, 77, 255, 0.55); }
+    .panel-accent-teal { border: 1px solid var(--border); border-left: 2px solid rgba(38, 198, 218, 0.55); }
+    .panel-accent-orange { border: 1px solid var(--border); border-left: 2px solid rgba(255, 152, 0, 0.55); }
 
     /* Cards (legacy) */
     .card {
@@ -227,7 +268,7 @@
     .service-grid { display: grid; gap: 10px; }
     .service-card {
       background: var(--bg-panel);
-      border: 2px solid rgba(100, 181, 246, 0.15);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
       cursor: pointer;
@@ -236,17 +277,25 @@
       box-shadow: var(--shadow);
     }
     .service-card:hover {
-      border-color: rgba(100, 181, 246, 0.35);
+      border-color: rgba(100, 181, 246, 0.28);
       transform: translateY(-2px);
     }
     .service-card.selected {
-      border-color: var(--accent);
+      border-color: rgba(33, 150, 243, 0.55);
       background: linear-gradient(160deg, rgba(25, 118, 210, 0.35) 0%, rgba(13, 31, 60, 0.95) 100%);
       box-shadow: 0 0 20px rgba(33, 150, 243, 0.25);
     }
-    .service-card .icon { font-size: 30px; margin-bottom: 8px; }
-    .service-card h3 { font-size: 15px; margin-bottom: 4px; }
-    .service-card p { font-size: 12px; color: var(--text-muted); }
+    .service-card .icon {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--border);
+    }
+    .service-card .icon .ico { width: 20px; height: 20px; }
+    .service-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .service-card p { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.78); }
 
     /* Options */
     .options-group {
@@ -384,24 +433,38 @@
 
     /* Portfolio */
     .repo-card {
+      display: block;
+      text-decoration: none;
       background: var(--bg-panel);
-      border: 1px solid rgba(102, 187, 106, 0.2);
-      border-left: 3px solid var(--accent-green);
-      border-radius: var(--radius);
-      padding: 14px;
+      border: 1px solid var(--border);
+      border-left: 2px solid rgba(102, 187, 106, 0.7);
+      border-radius: 8px;
+      padding: 16px 16px 14px 18px;
       margin-bottom: 10px;
       color: var(--text-light);
       box-shadow: var(--shadow);
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      cursor: pointer;
     }
     .repo-card:hover {
       transform: translateY(-2px);
+      border-color: rgba(102, 187, 106, 0.35);
       box-shadow: 0 8px 24px rgba(102, 187, 106, 0.15);
     }
-    .repo-card h4 { font-size: 14px; color: #a5d6a7; margin-bottom: 4px; }
-    .repo-card p { font-size: 12px; color: var(--text-muted); line-height: 1.4; margin-bottom: 8px; }
-    .repo-meta { display: flex; gap: 12px; font-size: 12px; color: var(--text-muted); flex-wrap: wrap; }
-    .repo-meta span { display: flex; align-items: center; gap: 4px; }
+    .repo-card h4 { font-size: 15px; font-weight: 700; color: #c8e6c9; margin-bottom: 6px; }
+    .repo-card p { font-size: 13px; font-weight: 400; color: rgba(255, 255, 255, 0.78); line-height: 1.45; margin-bottom: 10px; }
+    .repo-meta { display: flex; gap: 12px; font-size: 13px; font-weight: 400; color: rgba(232, 234, 246, 0.85); flex-wrap: wrap; align-items: center; }
+    .repo-meta span { display: inline-flex; align-items: center; gap: 5px; }
+    .repo-lang {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border);
+      font-size: 12px;
+    }
 
     /* Contacts */
     .contact-grid { display: grid; gap: 10px; }
@@ -417,33 +480,37 @@
       color: var(--text-light);
       transition: all 0.2s ease;
       box-shadow: var(--shadow);
+      cursor: pointer;
     }
     .contact-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(0,0,0,0.3); }
     .contact-btn:active { transform: scale(0.98); }
     .contact-btn .icon {
       width: 46px; height: 46px;
-      border-radius: 12px;
+      border-radius: 10px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
       flex-shrink: 0;
+      border: 1px solid var(--border);
     }
-    .contact-btn .info h4 { font-size: 14px; font-weight: 600; }
-    .contact-btn .info p { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-    .contact-btn.tg { border-left: 3px solid #42a5f5; }
-    .contact-btn.tg .icon { background: rgba(33, 150, 243, 0.2); }
-    .contact-btn.vk { border-left: 3px solid #7c4dff; }
-    .contact-btn.vk .icon { background: rgba(124, 77, 255, 0.2); }
-    .contact-btn.mail { border-left: 3px solid #ec407a; }
-    .contact-btn.mail .icon { background: rgba(236, 64, 122, 0.15); }
-    .contact-btn.github { border-left: 3px solid #ab47bc; }
-    .contact-btn.github .icon { background: rgba(171, 71, 188, 0.15); }
+    .contact-btn .icon .ico { width: 22px; height: 22px; }
+    .contact-btn .info h4 { font-size: 15px; font-weight: 700; }
+    .contact-btn .info p { font-size: 13px; font-weight: 400; color: rgba(255,255,255,0.75); margin-top: 2px; }
+    .contact-btn.tg { border-left: 2px solid #42a5f5; }
+    .contact-btn.tg .icon { background: rgba(33, 150, 243, 0.15); }
+    .contact-btn.vk { border-left: 2px solid #7c4dff; }
+    .contact-btn.vk .icon { background: rgba(124, 77, 255, 0.15); }
+    .contact-btn.mail { border-left: 2px solid #ec407a; }
+    .contact-btn.mail .icon { background: rgba(236, 64, 122, 0.12); }
+    .contact-btn.github { border-left: 2px solid #bdbdbd; }
+    .contact-btn.github .icon { background: rgba(255, 255, 255, 0.06); }
 
     /* About */
     #about .panel {
       padding: 22px 20px;
+      border: 1px solid var(--border);
     }
     .about-text {
       font-size: 14px;
+      font-weight: 400;
       line-height: 1.75;
       color: rgba(255, 255, 255, 0.92);
     }
@@ -456,13 +523,22 @@
       margin-top: 16px;
     }
     .skill-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       font-size: 12px;
-      padding: 6px 12px;
+      font-weight: 500;
+      padding: 7px 11px 7px 9px;
       border-radius: 8px;
-      background: rgba(100, 181, 246, 0.12);
-      border: 1px solid rgba(100, 181, 246, 0.22);
-      color: rgba(232, 234, 246, 0.9);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border);
+      border-left: 2px solid rgba(100, 181, 246, 0.45);
+      color: rgba(232, 234, 246, 0.92);
     }
+    .skill-tag--python { border-left-color: #ffd43b; }
+    .skill-tag--cpp { border-left-color: #5c9fd6; }
+    .skill-tag--sql { border-left-color: #80cbc4; }
+    .skill-tag--server { border-left-color: #90caf9; }
     .schedule {
       background: var(--bg-panel);
       border: 1px solid var(--border);
@@ -470,16 +546,32 @@
       padding: 18px 20px;
       margin-top: 12px;
       box-shadow: var(--shadow);
+      backdrop-filter: blur(8px);
     }
-    .schedule h4 { font-size: 14px; margin-bottom: 12px; color: var(--accent-light); font-weight: 600; }
+    .schedule-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      color: #fff;
+    }
+    .schedule-title svg {
+      width: 20px;
+      height: 20px;
+      color: #90caf9;
+      flex-shrink: 0;
+    }
     .schedule-item {
       display: flex;
       justify-content: space-between;
       gap: 12px;
       font-size: 13px;
-      padding: 8px 0;
-      color: rgba(232, 234, 246, 0.88);
-      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-weight: 400;
+      padding: 9px 0;
+      color: rgba(255, 255, 255, 0.85);
+      border-bottom: 1px solid rgba(255,255,255,0.06);
     }
     .schedule-item:last-child { border-bottom: none; }
     .schedule-item span:last-child { color: #90caf9; font-weight: 500; }
@@ -520,23 +612,23 @@
     /* Banners */
     .banner {
       border-radius: var(--radius);
-      padding: 16px;
+      padding: 18px 16px;
       text-align: center;
       margin: 12px 0;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid var(--border);
     }
-    .banner h3 { font-size: 15px; margin-bottom: 4px; }
-    .banner p { font-size: 12px; opacity: 0.9; }
+    .banner h3 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .banner p { font-size: 13px; font-weight: 400; opacity: 0.9; }
     .banner-blue {
       background: linear-gradient(135deg, #1565c0 0%, #42a5f5 100%);
       box-shadow: 0 6px 20px rgba(33, 150, 243, 0.3);
     }
     .banner-coop {
-      background: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(26, 58, 107, 0.65) 100%);
-      border: 1px solid rgba(100, 181, 246, 0.55);
+      background: linear-gradient(160deg, rgba(13, 31, 60, 0.95) 0%, rgba(20, 28, 52, 0.9) 100%);
+      border: 1px solid rgba(168, 85, 247, 0.55);
       box-shadow:
-        0 0 12px rgba(33, 150, 243, 0.35),
-        inset 0 0 20px rgba(33, 150, 243, 0.06);
+        0 0 15px rgba(168, 85, 247, 0.4),
+        inset 0 0 18px rgba(168, 85, 247, 0.06);
     }
     .banner-coop h3 { color: #fff; }
     .banner-coop p { color: rgba(232, 234, 246, 0.85); opacity: 1; }
@@ -665,12 +757,30 @@
 </div>
 
 <nav class="nav" id="nav">
-  <button class="nav-btn active" data-tab="about">Обо мне</button>
-  <button class="nav-btn" data-tab="services">Услуги</button>
-  <button class="nav-btn" data-tab="calculator">Калькулятор</button>
-  <button class="nav-btn" data-tab="brief">Своё тз</button>
-  <button class="nav-btn" data-tab="portfolio">Портфолио</button>
-  <button class="nav-btn" data-tab="contacts">Контакты</button>
+  <button class="nav-btn active" data-tab="about">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0"/><path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/></svg>
+    Обо мне
+  </button>
+  <button class="nav-btn" data-tab="services">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 9h18"/><path d="M9 13h6"/></svg>
+    Услуги
+  </button>
+  <button class="nav-btn" data-tab="calculator">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3h16a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"/><path d="M8 7h8"/><path d="M8 11h.01"/><path d="M12 11h.01"/><path d="M16 11h.01"/><path d="M8 15h.01"/><path d="M12 15h.01"/><path d="M16 15h.01"/></svg>
+    Калькулятор
+  </button>
+  <button class="nav-btn" data-tab="brief">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z"/><path d="M9 9h1"/><path d="M9 13h6"/><path d="M9 17h6"/></svg>
+    Своё тз
+  </button>
+  <button class="nav-btn" data-tab="portfolio">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M9 3v4"/><path d="M15 3v4"/></svg>
+    Портфолио
+  </button>
+  <button class="nav-btn" data-tab="contacts">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><path d="M3 7l9 6 9-6"/></svg>
+    Контакты
+  </button>
 </nav>
 
 <!-- ОБО МНЕ -->
@@ -684,15 +794,17 @@
       <p>При наличии домена могу развернуть сайт на указанном адресе. В основном работаю самостоятельно, но могу вступить в команду.</p>
     </div>
     <div class="skill-tags">
-      <span class="skill-tag">Python</span>
-      <span class="skill-tag">C++</span>
-      <span class="skill-tag">PostgreSQL</span>
-      <span class="skill-tag">MySQL</span>
-      <span class="skill-tag">DevOps</span>
+      <span class="skill-tag skill-tag--python"><i class="ico ico-sm ico-python"></i>Python</span>
+      <span class="skill-tag skill-tag--cpp"><i class="ico ico-sm ico-cpp"></i>C++</span>
+      <span class="skill-tag skill-tag--sql"><i class="ico ico-sm ico-sql"></i>SQL</span>
+      <span class="skill-tag skill-tag--server"><i class="ico ico-sm ico-server"></i>DevOps</span>
     </div>
   </div>
   <div class="schedule">
-    <h4>📅 Режим работы</h4>
+    <div class="schedule-title">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7z"/><path d="M16 3v4"/><path d="M8 3v4"/><path d="M4 11h16"/><path d="M8 15h2v2H8z"/></svg>
+      Режим работы
+    </div>
     <div class="schedule-item"><span>Ответы на заявки</span><span>10:00 – 23:00</span></div>
     <div class="schedule-item"><span>Работа над задачами</span><span>8:30 – 22:00</span></div>
     <div class="schedule-item"><span>Ежедневно</span><span>без выходных</span></div>
@@ -832,36 +944,36 @@
     <h2 class="section-title">Контакты</h2>
   </div>
   <div class="contact-grid">
-    <a class="contact-btn tg" href="https://t.me/KZENOF" target="_blank">
-      <div class="icon">✈️</div>
+    <a class="contact-btn tg" href="https://t.me/KZENOF" data-ext-link="https://t.me/KZENOF">
+      <div class="icon"><i class="ico ico-tg"></i></div>
       <div class="info">
         <h4>Telegram</h4>
         <p>Связь в тг - @KZENOF</p>
       </div>
     </a>
-    <a class="contact-btn vk" href="https://vk.ru/antonkalinskiy" target="_blank">
-      <div class="icon">💬</div>
+    <a class="contact-btn vk" href="https://vk.ru/antonkalinskiy" data-ext-link="https://vk.ru/antonkalinskiy">
+      <div class="icon"><i class="ico ico-vk"></i></div>
       <div class="info">
         <h4>ВКонтакте</h4>
         <p>vk.ru/antonkalinskiy</p>
       </div>
     </a>
     <a class="contact-btn mail" href="mailto:antonkalinskij@gmail.com">
-      <div class="icon">📧</div>
+      <div class="icon"><i class="ico ico-mail"></i></div>
       <div class="info">
         <h4>Gmail</h4>
         <p>antonkalinskij@gmail.com</p>
       </div>
     </a>
     <a class="contact-btn mail" href="mailto:antonkalinskij@mail.ru">
-      <div class="icon">📨</div>
+      <div class="icon"><i class="ico ico-mail"></i></div>
       <div class="info">
         <h4>Mail.ru</h4>
         <p>antonkalinskij@mail.ru</p>
       </div>
     </a>
-    <a class="contact-btn github" id="githubLink" href="#" target="_blank">
-      <div class="icon">🐙</div>
+    <a class="contact-btn github" href="#" id="githubLink" data-ext-link="">
+      <div class="icon"><i class="ico ico-github"></i></div>
       <div class="info">
         <h4>GitHub</h4>
         <p id="githubUsername">Загрузка...</p>
@@ -888,6 +1000,30 @@ if (tg) {
   tg.setHeaderColor('#0a1628');
   tg.setBackgroundColor('#0a1628');
 }
+
+function openExternal(url) {
+  if (!url) return;
+  if (url.startsWith('mailto:')) {
+    window.location.href = url;
+    return;
+  }
+  if (tg?.openTelegramLink && (url.includes('t.me/') || url.includes('telegram.me/'))) {
+    try { tg.openTelegramLink(url); return; } catch (_) {}
+  }
+  if (tg?.openLink) {
+    try { tg.openLink(url); return; } catch (_) {}
+  }
+  window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+document.addEventListener('click', e => {
+  const link = e.target.closest('[data-ext-link]');
+  if (!link) return;
+  const url = link.getAttribute('data-ext-link') || link.getAttribute('href');
+  if (!url || url === '#') return;
+  e.preventDefault();
+  openExternal(url);
+});
 
 function sendToBot(data, file = null) {
   if (!tg?.initData) {
@@ -981,10 +1117,10 @@ document.getElementById('nav').addEventListener('click', e => {
 
 // ─── Services Configurator ───
 const SERVICES = [
-  { id: 'python', icon: '🐍', title: 'Разработка на Python', desc: 'FastAPI, aiogram, Django, скрипты, автоматизация', base: 3000 },
-  { id: 'cpp', icon: '⚙️', title: 'Разработка на C++', desc: 'Высокопроизводительные приложения, системное ПО', base: 5000 },
-  { id: 'admin', icon: '🖥️', title: 'Администрирование & Деплой', desc: 'Настройка серверов, CI/CD, Docker, мониторинг', base: 4000 },
-  { id: 'db', icon: '🗄️', title: 'Проектирование БД', desc: 'PostgreSQL, MySQL — схемы, миграции, оптимизация', base: 2500 },
+  { id: 'python', ico: 'ico-python', title: 'Разработка на Python', desc: 'FastAPI, aiogram, Django, скрипты, автоматизация', base: 3000 },
+  { id: 'cpp', ico: 'ico-cpp', title: 'Разработка на C++', desc: 'Высокопроизводительные приложения, системное ПО', base: 5000 },
+  { id: 'admin', ico: 'ico-server', title: 'Администрирование & Деплой', desc: 'Настройка серверов, CI/CD, Docker, мониторинг', base: 4000 },
+  { id: 'db', ico: 'ico-sql', title: 'Проектирование БД', desc: 'PostgreSQL, MySQL — схемы, миграции, оптимизация', base: 2500 },
 ];
 
 let selectedService = null;
@@ -994,7 +1130,7 @@ SERVICES.forEach(s => {
   const el = document.createElement('div');
   el.className = 'service-card';
   el.dataset.id = s.id;
-  el.innerHTML = `<div class="icon">${s.icon}</div><h3>${s.title}</h3><p>${s.desc}</p><div class="card-price">от ${s.base.toLocaleString('ru')} ₽</div>`;
+  el.innerHTML = `<div class="icon"><i class="ico ${s.ico}"></i></div><h3>${s.title}</h3><p>${s.desc}</p><div class="card-price">от ${s.base.toLocaleString('ru')} ₽</div>`;
   el.addEventListener('click', () => {
     document.querySelectorAll('.service-card').forEach(c => c.classList.remove('selected'));
     el.classList.add('selected');
@@ -1027,7 +1163,7 @@ document.getElementById('submitService').addEventListener('click', () => {
 // ─── Calculator ───
 const PRICE_LIST = {
   sites: {
-    title: '🌐 Сайты',
+    title: '<i class="ico ico-sm ico-html"></i> Сайты',
     color: 'blue',
     items: [
       { name: 'Landing / 1 страница', price: 1000 },
@@ -1037,7 +1173,7 @@ const PRICE_LIST = {
     ],
   },
   apps: {
-    title: '📱 Приложения',
+    title: '<i class="ico ico-sm ico-app"></i> Приложения',
     color: 'indigo',
     items: [
       { name: 'Простой скрипт, бот, автоматизация', price: 1500 },
@@ -1047,7 +1183,7 @@ const PRICE_LIST = {
     ],
   },
   databases: {
-    title: '🗄️ Базы данных',
+    title: '<i class="ico ico-sm ico-sql"></i> Базы данных',
     color: 'orange',
     items: [
       { name: 'Простая схема + .sql файл', price: 1000 },
@@ -1064,7 +1200,7 @@ const calcContent = document.getElementById('calcContent');
 Object.entries(PRICE_LIST).forEach(([key, cat]) => {
   const div = document.createElement('div');
   div.className = 'calc-category';
-  div.innerHTML = `<h3>${cat.title}</h3>`;
+  div.innerHTML = `<h3 style="display:flex;align-items:center;gap:8px">${cat.title}</h3>`;
   cat.items.forEach(item => {
     const itemKey = `${key}:${item.name}`;
     const el = document.createElement('div');
@@ -1077,7 +1213,7 @@ Object.entries(PRICE_LIST).forEach(([key, cat]) => {
         el.classList.remove('selected');
       } else {
         calcSelections.set(itemKey, {
-          category: cat.title,
+          category: cat.title.replace(/<[^>]+>/g, '').trim(),
           name: item.name,
           price: item.price,
         });
@@ -1196,8 +1332,30 @@ document.getElementById('submitBrief').addEventListener('click', async () => {
 // ─── Portfolio (GitHub API) ───
 async function loadPortfolio() {
   const container = document.getElementById('portfolioContent');
+  const ghUrl = `https://github.com/${GITHUB_USERNAME}`;
   document.getElementById('githubUsername').textContent = GITHUB_USERNAME;
-  document.getElementById('githubLink').href = `https://github.com/${GITHUB_USERNAME}`;
+  const ghLink = document.getElementById('githubLink');
+  ghLink.href = ghUrl;
+  ghLink.setAttribute('data-ext-link', ghUrl);
+
+  const langIcon = (lang) => {
+    if (!lang) return '';
+    const map = {
+      Python: 'ico-python',
+      HTML: 'ico-html',
+      CSS: 'ico-html',
+      JavaScript: 'ico-app',
+      TypeScript: 'ico-app',
+      'C++': 'ico-cpp',
+      C: 'ico-cpp',
+      SQL: 'ico-sql',
+      PLpgSQL: 'ico-sql',
+      Shell: 'ico-server',
+      Dockerfile: 'ico-server',
+    };
+    const cls = map[lang] || 'ico-app';
+    return `<span class="repo-lang"><i class="ico ico-sm ${cls}"></i>${lang}</span>`;
+  };
 
   try {
     const resp = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=10`);
@@ -1210,15 +1368,15 @@ async function loadPortfolio() {
     }
 
     container.innerHTML = repos.map(r => `
-      <div class="repo-card">
+      <a class="repo-card" href="${r.html_url}" data-ext-link="${r.html_url}">
         <h4>${r.name}</h4>
         <p>${r.description || 'Без описания'}</p>
         <div class="repo-meta">
-          ${r.language ? `<span>💻 ${r.language}</span>` : ''}
-          <span>⭐ ${r.stargazers_count}</span>
-          <span>🍴 ${r.forks_count}</span>
+          ${langIcon(r.language)}
+          <span>★ ${r.stargazers_count}</span>
+          <span>⑂ ${r.forks_count}</span>
         </div>
-      </div>
+      </a>
     `).join('');
   } catch (e) {
     container.innerHTML = `<div class="loading">Не удалось загрузить GitHub.<br><small>Укажите username через ?gh=username</small></div>`;

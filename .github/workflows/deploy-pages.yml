@@ -25,9 +25,10 @@ jobs:
 
       - name: Prepare site
         run: |
-          mkdir -p _site
+          mkdir -p _site/icons
           cp assets/index.html _site/index.html
           cp assets/index.html _site/404.html
+          cp assets/icons/*.svg _site/icons/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
