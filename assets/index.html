@@ -653,10 +653,10 @@
 <script>
 // ─── Config ───
 const GITHUB_USERNAME = new URLSearchParams(location.search).get('gh') || 'kzenof';
-// URL API бота на Render (заполните после деплоя):
-const BOT_API_URL = 'https://ЗАМЕНИТЕ.onrender.com/api/submit'.includes('ЗАМЕНИТЕ')
+// API: на Render/Fly — тот же сервер; на GitHub Pages — sendData
+const BOT_API_URL = location.hostname.includes('github.io')
   ? ''
-  : 'https://ЗАМЕНИТЕ.onrender.com/api/submit';
+  : `${location.origin}/api/submit`;
 
 // ─── Telegram WebApp ───
 const tg = window.Telegram?.WebApp;
@@ -679,7 +679,6 @@ function sendToBot(data) {
 async function submitOrder(data) {
   const payload = JSON.stringify(data);
 
-  // Способ 1: HTTP API (надёжнее, нужен деплой бота на Render)
   if (BOT_API_URL) {
     try {
       const resp = await fetch(BOT_API_URL, {
@@ -687,18 +686,24 @@ async function submitOrder(data) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: tg.initData, data }),
       });
-      const result = await resp.json();
-      if (result.ok) {
+      const result = await resp.json().catch(() => ({}));
+      if (resp.ok && result.ok) {
         tg.showAlert('✅ Заявка отправлена! Антон ответит в ближайшее время.');
         tg.close();
         return;
       }
+      const err = result.error || `HTTP ${resp.status}`;
+      showToast(`Ошибка: ${err}`);
+      console.warn('API submit failed:', err);
+      return;
     } catch (e) {
+      showToast('Сервер недоступен. Подождите и попробуйте снова.');
       console.warn('API error:', e);
+      return;
     }
   }
 
-  // Способ 2: sendData (бот должен быть запущен, только 1 экземпляр!)
+  // Fallback только для GitHub Pages (открыто через inline-кнопку бота)
   try {
     tg.sendData(payload);
   } catch (e) {

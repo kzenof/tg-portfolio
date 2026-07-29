@@ -12,7 +12,7 @@ import os
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from urllib.parse import parse_qsl
+from urllib.parse import unquote
 
 from aiohttp import web
 from aiogram import Bot, Dispatcher, F
@@ -98,21 +98,34 @@ def validate_init_data(init_data: str) -> dict | None:
     """Проверяет подпись Telegram WebApp initData."""
     if not init_data:
         return None
-    parsed = dict(parse_qsl(init_data, keep_blank_values=True))
-    received_hash = parsed.pop("hash", None)
+
+    pairs: list[tuple[str, str]] = []
+    for part in init_data.split("&"):
+        if not part:
+            continue
+        if "=" in part:
+            key, value = part.split("=", 1)
+            pairs.append((key, value))
+        else:
+            pairs.append((part, ""))
+
+    fields = dict(pairs)
+    received_hash = fields.pop("hash", None)
     if not received_hash:
         return None
 
-    check_string = "\n".join(f"{k}={v}" for k, v in sorted(parsed.items()))
+    # Значения без URL-decode — иначе хэш не совпадёт (документация Telegram)
+    check_string = "\n".join(f"{k}={v}" for k, v in sorted(fields.items()))
     secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
     calculated = hmac.new(secret, check_string.encode(), hashlib.sha256).hexdigest()
     if calculated != received_hash:
+        logger.warning("initData: hash mismatch")
         return None
 
-    user_raw = parsed.get("user")
+    user_raw = fields.get("user")
     if not user_raw:
         return None
-    return json.loads(user_raw)
+    return json.loads(unquote(user_raw))
 
 
 def user_from_init(user_data: dict) -> SimpleNamespace:
@@ -255,12 +268,15 @@ async def api_submit(request):
     except json.JSONDecodeError:
         return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400, headers=CORS_HEADERS)
 
-    user_data = validate_init_data(body.get("initData", ""))
+    init_data = body.get("initData", "")
+    user_data = validate_init_data(init_data)
     if not user_data:
+        logger.warning("api_submit: invalid initData (len=%s)", len(init_data))
         return web.json_response({"ok": False, "error": "Invalid initData"}, status=403, headers=CORS_HEADERS)
 
     user = user_from_init(user_data)
     data = body.get("data", {})
+    logger.info("api_submit от user %s, type=%s", user.id, data.get("type"))
     delivered = await process_order(data, user, source="api")
     return web.json_response({"ok": delivered}, headers=CORS_HEADERS)
 
