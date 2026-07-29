@@ -4,15 +4,12 @@ Telegram-бот + HTTP API для Mini App.
 """
 
 import asyncio
-import hashlib
-import hmac
 import json
 import logging
 import os
 from datetime import datetime
 from pathlib import Path
 from types import SimpleNamespace
-from urllib.parse import unquote
 
 from aiohttp import web
 from aiogram import Bot, Dispatcher, F
@@ -24,6 +21,7 @@ from aiogram.types import (
     InlineKeyboardButton,
     MenuButtonWebApp,
 )
+from aiogram.utils.web_app import safe_parse_webapp_init_data
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -31,7 +29,7 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-BOT_TOKEN = os.getenv("BOT_TOKEN")
+BOT_TOKEN = (os.getenv("BOT_TOKEN") or "").strip().strip('"').strip("'")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "0"))
 WEBAPP_URL = os.getenv("WEBAPP_URL") or os.getenv("RENDER_EXTERNAL_URL", "")
 if WEBAPP_URL and not WEBAPP_URL.endswith("/"):
@@ -54,7 +52,7 @@ ASSETS_DIR = Path(__file__).parent / "assets"
 CORS_HEADERS = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
 }
 
 
@@ -98,34 +96,14 @@ def validate_init_data(init_data: str) -> dict | None:
     """Проверяет подпись Telegram WebApp initData."""
     if not init_data:
         return None
-
-    pairs: list[tuple[str, str]] = []
-    for part in init_data.split("&"):
-        if not part:
-            continue
-        if "=" in part:
-            key, value = part.split("=", 1)
-            pairs.append((key, value))
-        else:
-            pairs.append((part, ""))
-
-    fields = dict(pairs)
-    received_hash = fields.pop("hash", None)
-    if not received_hash:
+    try:
+        parsed = safe_parse_webapp_init_data(BOT_TOKEN, init_data)
+    except ValueError:
+        logger.warning("initData: invalid signature (len=%s)", len(init_data))
         return None
-
-    # Значения без URL-decode — иначе хэш не совпадёт (документация Telegram)
-    check_string = "\n".join(f"{k}={v}" for k, v in sorted(fields.items()))
-    secret = hmac.new(b"WebAppData", BOT_TOKEN.encode(), hashlib.sha256).digest()
-    calculated = hmac.new(secret, check_string.encode(), hashlib.sha256).hexdigest()
-    if calculated != received_hash:
-        logger.warning("initData: hash mismatch")
+    if not parsed.user:
         return None
-
-    user_raw = fields.get("user")
-    if not user_raw:
-        return None
-    return json.loads(unquote(user_raw))
+    return parsed.user.model_dump()
 
 
 def user_from_init(user_data: dict) -> SimpleNamespace:
@@ -268,7 +246,12 @@ async def api_submit(request):
     except json.JSONDecodeError:
         return web.json_response({"ok": False, "error": "Invalid JSON"}, status=400, headers=CORS_HEADERS)
 
-    init_data = body.get("initData", "")
+    auth = request.headers.get("Authorization", "")
+    if auth.lower().startswith("tma "):
+        init_data = auth[4:].strip()
+    else:
+        init_data = body.get("initData", "")
+
     user_data = validate_init_data(init_data)
     if not user_data:
         logger.warning("api_submit: invalid initData (len=%s)", len(init_data))
@@ -320,6 +303,8 @@ async def set_menu_button():
 
 async def main():
     await start_web_server()
+    me = await bot.get_me()
+    logger.info("Bot: @%s (id=%s)", me.username, me.id)
     await set_menu_button()
     logger.info("Бот запущен. Mini App: %s", WEBAPP_URL)
     await dp.start_polling(bot, handle_signals=False)

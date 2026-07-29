@@ -683,8 +683,11 @@ async function submitOrder(data) {
     try {
       const resp = await fetch(BOT_API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ initData: tg.initData, data }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `tma ${tg.initData}`,
+        },
+        body: JSON.stringify({ data }),
       });
       const result = await resp.json().catch(() => ({}));
       if (resp.ok && result.ok) {
